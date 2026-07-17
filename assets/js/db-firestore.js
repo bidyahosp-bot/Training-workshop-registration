@@ -1,8 +1,8 @@
 // ============================================
 // Firestore Database Functions - BTH v3.0
-// متوافق مع هيكل البيانات في Firestore
 // ============================================
 
+// ✅ المسار الصحيح من assets/js/ إلى firebase/
 import {
     db,
     WORKSHOPS_COLLECTION,
@@ -23,7 +23,7 @@ import {
     onSnapshot,
     setDoc,
     getCountFromServer
-} from '../firebase/firebase-init.js';
+} from '../../firebase/firebase-init.js';
 
 // ============================================
 // WORKSHOPS CRUD
@@ -89,7 +89,7 @@ export async function getEmployeeWorkshops(employeeId) {
 }
 
 // ============================================
-// EMPLOYEES CRUD - متوافق مع هيكل البيانات
+// EMPLOYEES CRUD
 // ============================================
 
 export async function updateEmployeeStats(employeeId) {
@@ -101,7 +101,6 @@ export async function updateEmployeeStats(employeeId) {
             return null;
         }
 
-        // استخراج اسم الموظف من أول ورشة
         const firstWorkshop = workshops[0];
         const employeeName = firstWorkshop.employeeName || firstWorkshop.name || employeeId;
         const department = firstWorkshop.department || 'غير محدد';
@@ -134,7 +133,6 @@ export async function getAllEmployees() {
         const employees = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            // توحيد أسماء الحقول
             employees.push({
                 id: doc.id,
                 employeeId: data.employeeId || doc.id,
@@ -150,29 +148,6 @@ export async function getAllEmployees() {
     } catch (error) {
         console.error('❌ خطأ في جلب الموظفين:', error);
         return [];
-    }
-}
-
-export async function getEmployee(employeeId) {
-    try {
-        const docRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            return {
-                id: docSnap.id,
-                employeeId: data.employeeId || docSnap.id,
-                name: data.employeeName || data.name || data.employeeId || docSnap.id,
-                department: data.department || 'غير محدد',
-                workshops: data.workshops || data.workshopsCount || 0,
-                totalHours: data.totalHours || 0,
-                updatedAt: data.updatedAt || data.lastUpdated || new Date().toISOString()
-            };
-        }
-        return null;
-    } catch (error) {
-        console.error('❌ خطأ في جلب الموظف:', error);
-        return null;
     }
 }
 
@@ -246,7 +221,6 @@ export async function getDashboardData() {
         const totalEmployees = allEmployees.length;
         const avgHours = totalEmployees > 0 ? (totalHours / totalEmployees) : 0;
 
-        // ورش هذا الشهر
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
         const monthlyWorkshops = allWorkshops.filter(w => w.timestamp >= monthStart).length;
@@ -321,50 +295,6 @@ export function listenToEmployees(callback) {
 }
 
 // ============================================
-// تحديث جميع إحصائيات الموظفين
-// ============================================
-export async function updateAllEmployeesStats() {
-    try {
-        const workshops = await getAllWorkshops();
-        const employeeMap = new Map();
-        
-        workshops.forEach(w => {
-            const id = w.employeeId;
-            if (!id) return;
-            
-            if (!employeeMap.has(id)) {
-                employeeMap.set(id, {
-                    employeeId: id,
-                    name: w.employeeName || w.name || id,
-                    department: w.department || 'غير محدد',
-                    workshops: 0,
-                    totalHours: 0
-                });
-            }
-            const emp = employeeMap.get(id);
-            emp.workshops += 1;
-            emp.totalHours += w.hours || 0;
-        });
-        
-        const batch = writeBatch(db);
-        for (const [id, data] of employeeMap) {
-            const docRef = doc(db, EMPLOYEES_COLLECTION, id);
-            batch.set(docRef, {
-                ...data,
-                updatedAt: new Date().toISOString()
-            });
-        }
-        await batch.commit();
-        
-        console.log('✅ تم تحديث إحصائيات', employeeMap.size, 'موظف');
-        return employeeMap.size;
-    } catch (error) {
-        console.error('❌ خطأ في تحديث الإحصائيات:', error);
-        return 0;
-    }
-}
-
-// ============================================
 // EXPORT
 // ============================================
 export default {
@@ -373,11 +303,9 @@ export default {
     getEmployeeWorkshops,
     updateEmployeeStats,
     getAllEmployees,
-    getEmployee,
     getTopEmployees,
     getTopDepartments,
     getDashboardData,
     listenToWorkshops,
-    listenToEmployees,
-    updateAllEmployeesStats
+    listenToEmployees
 };
