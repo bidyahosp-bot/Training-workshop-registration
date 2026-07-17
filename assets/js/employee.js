@@ -1,6 +1,5 @@
 // ============================================
-// Employee JavaScript - Bidiya Training Hub
-// Version 3.0 - Firebase Firestore
+// Employee JavaScript - BTH v3.0
 // ============================================
 
 import { getAllEmployees, getAllWorkshops, getEmployeeWorkshops, getTopEmployees } from './db-firestore.js';
@@ -45,7 +44,7 @@ function showEmployeeError(message) {
             <div class="error-message" style="text-align:center; padding:30px;">
                 <i class="fas fa-exclamation-triangle" style="font-size:2rem; color:#e74c3c;"></i>
                 <p style="margin-top:10px;">${message}</p>
-                <button onclick="loadEmployeeData()" class="btn-primary" style="margin-top:15px;">
+                <button onclick="location.reload()" class="btn-primary" style="margin-top:15px;">
                     <i class="fas fa-sync-alt"></i> إعادة المحاولة
                 </button>
             </div>
@@ -283,7 +282,7 @@ function updateProgress(count) {
 // أحداث الصفحة
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 صفحة الموظف جاهزة (Firestore)');
+    console.log('📄 صفحة الموظف جاهزة (Firestore v3.0)');
     loadEmployeeData();
 
     const searchInput = document.getElementById('employeeSearch');
