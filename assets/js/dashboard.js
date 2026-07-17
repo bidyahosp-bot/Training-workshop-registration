@@ -2,6 +2,7 @@
 // Dashboard JavaScript - BTH v3.0
 // ============================================
 
+// ✅ المسار الصحيح
 import { getDashboardData, listenToWorkshops } from './db-firestore.js';
 import { formatDate, getBadge, DEPT_ICONS } from './config.js';
 
