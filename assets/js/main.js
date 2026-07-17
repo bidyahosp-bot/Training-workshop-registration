@@ -2,40 +2,11 @@
 // Main JavaScript - Bidiya Training Hub v3.0
 // ============================================
 
-import { initializeDatabase, getDashboardData } from './db-firestore.js';
+// ✅ المسار الصحيح
+import { getDashboardData } from './db-firestore.js';
 import { APP_CONFIG } from './config.js';
 
 console.log(`🚀 ${APP_CONFIG.name} v${APP_CONFIG.version} - Firebase Firestore`);
-
-// ============================================
-// تهيئة التطبيق
-// ============================================
-export async function initApp() {
-    try {
-        console.log('📡 جاري تهيئة التطبيق...');
-        
-        // تهيئة قاعدة البيانات مع بيانات تجريبية
-        const result = await initializeDatabase();
-        
-        if (result.success) {
-            if (result.seeded) {
-                console.log('✅ تم إضافة', result.count, 'ورشة تجريبية');
-            } else {
-                console.log('✅ البيانات موجودة مسبقاً:', result.count, 'ورشة');
-            }
-        } else {
-            console.warn('⚠️ تحذير في تهيئة قاعدة البيانات:', result.error);
-        }
-        
-        // تحميل البيانات للصفحة الرئيسية
-        await loadHomePageData();
-        
-        return result;
-    } catch (error) {
-        console.error('❌ خطأ في تهيئة التطبيق:', error);
-        return { success: false, error: error.message };
-    }
-}
 
 // ============================================
 // تحميل بيانات الصفحة الرئيسية
@@ -46,7 +17,6 @@ export async function loadHomePageData() {
         const data = await getDashboardData();
         const summary = data.summary || {};
 
-        // تحديث الإحصائيات
         const elements = {
             totalWorkshops: document.getElementById('totalWorkshops'),
             totalHours: document.getElementById('totalHours'),
@@ -107,7 +77,11 @@ export function initDarkMode() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 BTH v3.0 - جاري التهيئة...');
     initDarkMode();
-    initApp();
+    
+    // إذا كنا في الصفحة الرئيسية
+    if (document.getElementById('totalWorkshops')) {
+        loadHomePageData();
+    }
 });
 
 console.log('✅ main.js تم تحميله بنجاح (Firestore v3.0)');
