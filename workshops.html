@@ -12,6 +12,7 @@
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a7a3a">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BTH">
@@ -150,10 +151,9 @@
         </div>
     </footer>
 
-    <script type="module">
-        import './js/i18n.js';
-        import './js/main.js';
-        import './js/workshops.js';
-    </script>
+    <!-- ✅ المسارات الصحيحة -->
+    <script type="module" src="assets/js/i18n.js"></script>
+    <script type="module" src="assets/js/main.js"></script>
+    <script type="module" src="assets/js/workshops.js"></script>
 </body>
 </html>
