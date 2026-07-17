@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرئيسية - Bidiya Hospital Training Hub</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/dark-mode.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a7a3a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BTH">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+</head>
+<body>
+
+    <button class="dark-toggle" id="darkToggle"><i class="fas fa-moon"></i></button>
+
+    <div class="lang-selector">
+        <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
+        <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="assets/img/logo.png" alt="BTH Logo" class="logo-img" onerror="this.style.display='none'">
+                    <div>
+                        <h1 class="logo-title" data-i18n="app_name">منصة مستشفى بدية للتدريب والتطوير المهني</h1>
+                        <p class="logo-tagline" data-i18n="tagline">نتعلم اليوم... لنرعى أفضل غدًا</p>
+                    </div>
+                </div>
+                <nav class="main-nav">
+                    <a href="index.html" class="active" data-i18n="nav_home">الرئيسية</a>
+                    <a href="dashboard.html" data-i18n="nav_dashboard">لوحة الشرف</a>
+                    <a href="workshops.html" data-i18n="nav_workshops">سجل الورش</a>
+                    <a href="register.html" data-i18n="nav_register">تسجيل ورشة</a>
+                    <a href="reports.html" data-i18n="nav_reports">التقارير</a>
+                    <a href="employee.html" data-i18n="nav_employee">صفحة الموظف</a>
+                    <a href="about.html" data-i18n="nav_about">عن المطور</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 data-i18n="hero_title">معًا نبني ثقافة التعلم المستمر في مستشفى بدية</h1>
+                    <p data-i18n="hero_subtitle">سجل مشاركاتك التدريبية وانضم إلى مجتمع التعلم</p>
+                    <div class="hero-buttons">
+                        <a href="register.html" class="btn-primary btn-lg">
+                            <i class="fas fa-plus-circle"></i> <span data-i18n="register_workshop">تسجيل ورشة جديدة</span>
+                        </a>
+                        <a href="workshops.html" class="btn-secondary btn-lg">
+                            <i class="fas fa-list"></i> <span data-i18n="browse_workshops">استعراض الورش</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalWorkshops">0</span>
+                        <span class="stat-label" data-i18n="total_workshops">إجمالي الورش</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalHours">0</span>
+                        <span class="stat-label" data-i18n="total_hours">إجمالي ساعات التدريب</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalEmployees">0</span>
+                        <span class="stat-label" data-i18n="total_employees">الموظفين المشاركين</span>
+                    </div>
+                    <div class="stat-card highlight">
+                        <span class="stat-number" id="topEmployee">-</span>
+                        <span class="stat-label" data-i18n="top_employee_label">أفضل موظف</span>
+                    </div>
+                    <div class="stat-card highlight">
+                        <span class="stat-number" id="lastEmployee">-</span>
+                        <span class="stat-label" data-i18n="last_registration_label">آخر تسجيل</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-trophy"></i>
+                    <h3 data-i18n="view_dashboard">لوحة الشرف</h3>
+                    <p data-i18n="dashboard_desc">شاهد أفضل الموظفين والأقسام</p>
+                    <a href="dashboard.html" class="btn-primary"><span data-i18n="view_dashboard">لوحة الشرف</span></a>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-bar"></i>
+                    <h3 data-i18n="view_reports">التقارير</h3>
+                    <p data-i18n="reports_desc">استخرج تقارير وإحصائيات مفصلة</p>
+                    <a href="reports.html" class="btn-primary"><span data-i18n="view_reports">التقارير</span></a>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-user"></i>
+                    <h3 data-i18n="employee_profile">صفحة الموظف</h3>
+                    <p data-i18n="employee_profile_subtitle">عرض إنجازاتك التدريبية</p>
+                    <a href="employee.html" class="btn-primary"><span data-i18n="employee_profile">صفحة الموظف</span></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>🏥 Bidiya Hospital Training Hub</h3>
+                    <p data-i18n="footer_tagline">نتعلم اليوم... لنرعى أفضل غدًا</p>
+                </div>
+                <div class="footer-center">
+                    <p data-i18n="footer_copyright">© 2026 مستشفى بدية - جميع الحقوق محفوظة</p>
+                    <p class="footer-version">v3.0 | 🔥 Firestore | <span data-i18n="footer_pwa">تطبيق يعمل دون اتصال</span></p>
+                </div>
+                <div class="footer-developer">
+                    <div class="developer-badge">
+                        <span class="dev-icon">💎</span>
+                        <div class="dev-info">
+                            <span class="dev-name">JOUHARAH.IT</span>
+                            <span class="dev-role" data-i18n="dev_role">التطوير والبرمجة</span>
+                        </div>
+                    </div>
+                    <div class="dev-social">
+                        <a href="#" target="_blank"><i class="fas fa-globe"></i></a>
+                        <a href="#" target="_blank"><i class="fas fa-envelope"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="developer-credit">
+                    <span data-i18n="developed_by">تم التطوير بواسطة</span>
+                    <strong class="jouharah-text">💎 JOUHARAH.IT</strong>
+                    <span data-i18n="all_rights">© 2026</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import './js/i18n.js';
+        import './js/main.js';
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+/* ============================================
+Dark Mode
+============================================ */
+
+body.dark-mode {
+--bg-main: #0f1724;
+--bg-card: #1a2332;
+--text-primary: #e8edf5;
+--text-secondary: #a0b4c8;
+--shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+--primary-light: #1a3a2a;
+}
+
+body.dark-mode .header {
+background: #0f1724;
+border-bottom: 1px solid #1a2332;
+}
+
+body.dark-mode .action-card {
+background: var(--bg-card);
+}
+
+body.dark-mode .lang-selector {
+background: rgba(26, 35, 50, 0.95);
+}
+
+body.dark-mode .lang-btn {
+color: var(--text-secondary);
+}
+
+body.dark-mode .lang-btn.active {
+background: var(--primary);
+color: white;
+}
+
+body.dark-mode .hero {
+background: linear-gradient(135deg, #0d4a2a 0%, #062a15 100%);
+}
+
+body.dark-mode .main-nav a {
+color: var(--text-secondary);
+}
+
+body.dark-mode .main-nav a:hover,
+body.dark-mode .main-nav a.active {
+background: var(--primary);
+color: white;
+}
