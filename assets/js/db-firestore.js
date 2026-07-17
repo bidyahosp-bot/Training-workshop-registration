@@ -1,5 +1,6 @@
 // ============================================
-// Firestore Database Functions - BTH
+// Firestore Database Functions - BTH v3.0
+// متوافق مع هيكل البيانات في Firestore
 // ============================================
 
 import {
@@ -20,46 +21,35 @@ import {
     Timestamp,
     writeBatch,
     onSnapshot,
-    setDoc
+    setDoc,
+    getCountFromServer
 } from '../firebase/firebase-init.js';
 
 // ============================================
 // WORKSHOPS CRUD
 // ============================================
 
-// ✅ إضافة ورشة جديدة
 export async function addWorkshop(workshopData) {
     try {
-        // التأكد من وجود timestamp
         const data = {
             ...workshopData,
             timestamp: workshopData.timestamp || new Date().toISOString(),
             createdAt: Timestamp.now(),
-            synced: true // في Firestore، تكون متزامنة فوراً
+            synced: true
         };
 
-        // إضافة إلى Firestore
         const docRef = await addDoc(collection(db, WORKSHOPS_COLLECTION), data);
         console.log('✅ تمت إضافة الورشة:', docRef.id);
 
-        // تحديث إحصائيات الموظف
         await updateEmployeeStats(data.employeeId);
 
-        return {
-            success: true,
-            id: docRef.id,
-            data: data
-        };
+        return { success: true, id: docRef.id, data: data };
     } catch (error) {
         console.error('❌ خطأ في إضافة الورشة:', error);
-        return {
-            success: false,
-            error: error.message
-        };
+        return { success: false, error: error.message };
     }
 }
 
-// ✅ جلب جميع الورش
 export async function getAllWorkshops() {
     try {
         const q = query(
@@ -69,10 +59,7 @@ export async function getAllWorkshops() {
         const snapshot = await getDocs(q);
         const workshops = [];
         snapshot.forEach(doc => {
-            workshops.push({
-                id: doc.id,
-                ...doc.data()
-            });
+            workshops.push({ id: doc.id, ...doc.data() });
         });
         console.log('📚 عدد الورش:', workshops.length);
         return workshops;
@@ -82,7 +69,6 @@ export async function getAllWorkshops() {
     }
 }
 
-// ✅ جلب الورش حسب الموظف
 export async function getEmployeeWorkshops(employeeId) {
     try {
         const q = query(
@@ -93,10 +79,7 @@ export async function getEmployeeWorkshops(employeeId) {
         const snapshot = await getDocs(q);
         const workshops = [];
         snapshot.forEach(doc => {
-            workshops.push({
-                id: doc.id,
-                ...doc.data()
-            });
+            workshops.push({ id: doc.id, ...doc.data() });
         });
         return workshops;
     } catch (error) {
@@ -105,68 +88,33 @@ export async function getEmployeeWorkshops(employeeId) {
     }
 }
 
-// ✅ جلب الورش حسب الفترة
-export async function getWorkshopsByDate(startDate, endDate) {
-    try {
-        const q = query(
-            collection(db, WORKSHOPS_COLLECTION),
-            where('timestamp', '>=', startDate),
-            where('timestamp', '<=', endDate),
-            orderBy('timestamp', 'desc')
-        );
-        const snapshot = await getDocs(q);
-        const workshops = [];
-        snapshot.forEach(doc => {
-            workshops.push({
-                id: doc.id,
-                ...doc.data()
-            });
-        });
-        return workshops;
-    } catch (error) {
-        console.error('❌ خطأ في جلب الورش حسب التاريخ:', error);
-        return [];
-    }
-}
-
-// ✅ حذف ورشة
-export async function deleteWorkshop(docId) {
-    try {
-        await deleteDoc(doc(db, WORKSHOPS_COLLECTION, docId));
-        console.log('🗑️ تم حذف الورشة:', docId);
-        return { success: true };
-    } catch (error) {
-        console.error('❌ خطأ في حذف الورشة:', error);
-        return { success: false, error: error.message };
-    }
-}
-
 // ============================================
-// EMPLOYEES CRUD
+// EMPLOYEES CRUD - متوافق مع هيكل البيانات
 // ============================================
 
-// ✅ تحديث إحصائيات الموظف
 export async function updateEmployeeStats(employeeId) {
     try {
-        // جلب جميع ورش الموظف
         const workshops = await getEmployeeWorkshops(employeeId);
-
+        
         if (workshops.length === 0) {
-            // حذف الموظف إذا لم يعد لديه ورش
             await deleteDoc(doc(db, EMPLOYEES_COLLECTION, employeeId));
             return null;
         }
 
+        // استخراج اسم الموظف من أول ورشة
+        const firstWorkshop = workshops[0];
+        const employeeName = firstWorkshop.employeeName || firstWorkshop.name || employeeId;
+        const department = firstWorkshop.department || 'غير محدد';
+
         const stats = {
             employeeId: employeeId,
-            name: workshops[0].employeeName || workshops[0].employee || employeeId,
-            department: workshops[0].department || 'غير محدد',
+            name: employeeName,
+            department: department,
             workshops: workshops.length,
             totalHours: workshops.reduce((sum, w) => sum + (w.hours || 0), 0),
-            lastUpdated: new Date().toISOString()
+            updatedAt: new Date().toISOString()
         };
 
-        // حفظ في Firestore
         await setDoc(doc(db, EMPLOYEES_COLLECTION, employeeId), stats);
         console.log('✅ تم تحديث إحصائيات الموظف:', employeeId);
         return stats;
@@ -176,7 +124,6 @@ export async function updateEmployeeStats(employeeId) {
     }
 }
 
-// ✅ جلب جميع الموظفين
 export async function getAllEmployees() {
     try {
         const q = query(
@@ -186,9 +133,16 @@ export async function getAllEmployees() {
         const snapshot = await getDocs(q);
         const employees = [];
         snapshot.forEach(doc => {
+            const data = doc.data();
+            // توحيد أسماء الحقول
             employees.push({
                 id: doc.id,
-                ...doc.data()
+                employeeId: data.employeeId || doc.id,
+                name: data.employeeName || data.name || data.employeeId || doc.id,
+                department: data.department || 'غير محدد',
+                workshops: data.workshops || data.workshopsCount || 0,
+                totalHours: data.totalHours || 0,
+                updatedAt: data.updatedAt || data.lastUpdated || new Date().toISOString()
             });
         });
         console.log('👥 عدد الموظفين:', employees.length);
@@ -199,15 +153,20 @@ export async function getAllEmployees() {
     }
 }
 
-// ✅ جلب موظف معين
 export async function getEmployee(employeeId) {
     try {
         const docRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
+            const data = docSnap.data();
             return {
                 id: docSnap.id,
-                ...docSnap.data()
+                employeeId: data.employeeId || docSnap.id,
+                name: data.employeeName || data.name || data.employeeId || docSnap.id,
+                department: data.department || 'غير محدد',
+                workshops: data.workshops || data.workshopsCount || 0,
+                totalHours: data.totalHours || 0,
+                updatedAt: data.updatedAt || data.lastUpdated || new Date().toISOString()
             };
         }
         return null;
@@ -217,7 +176,6 @@ export async function getEmployee(employeeId) {
     }
 }
 
-// ✅ جلب أفضل الموظفين
 export async function getTopEmployees(limitCount = 5) {
     try {
         const q = query(
@@ -228,9 +186,14 @@ export async function getTopEmployees(limitCount = 5) {
         const snapshot = await getDocs(q);
         const employees = [];
         snapshot.forEach(doc => {
+            const data = doc.data();
             employees.push({
                 id: doc.id,
-                ...doc.data()
+                employeeId: data.employeeId || doc.id,
+                name: data.employeeName || data.name || data.employeeId || doc.id,
+                department: data.department || 'غير محدد',
+                workshops: data.workshops || data.workshopsCount || 0,
+                totalHours: data.totalHours || 0
             });
         });
         return employees;
@@ -240,7 +203,6 @@ export async function getTopEmployees(limitCount = 5) {
     }
 }
 
-// ✅ جلب أفضل الأقسام
 export async function getTopDepartments(limitCount = 5) {
     try {
         const employees = await getAllEmployees();
@@ -261,32 +223,27 @@ export async function getTopDepartments(limitCount = 5) {
             departments[dept].totalHours += emp.totalHours || 0;
         });
 
-        const sorted = Object.values(departments)
+        return Object.values(departments)
             .sort((a, b) => b.workshops - a.workshops)
             .slice(0, limitCount);
-
-        return sorted;
     } catch (error) {
         console.error('❌ خطأ في جلب أفضل الأقسام:', error);
         return [];
     }
 }
 
-// ============================================
-// DASHBOARD DATA
-// ============================================
-
 export async function getDashboardData() {
     try {
-        const allWorkshops = await getAllWorkshops();
-        const topEmployees = await getTopEmployees(3);
-        const topDepartments = await getTopDepartments(5);
+        const [allWorkshops, topEmployees, topDepartments, allEmployees] = await Promise.all([
+            getAllWorkshops(),
+            getTopEmployees(3),
+            getTopDepartments(5),
+            getAllEmployees()
+        ]);
 
-        // الإحصائيات
         const totalWorkshops = allWorkshops.length;
         const totalHours = allWorkshops.reduce((sum, w) => sum + (w.hours || 0), 0);
-        const employees = await getAllEmployees();
-        const totalEmployees = employees.length;
+        const totalEmployees = allEmployees.length;
         const avgHours = totalEmployees > 0 ? (totalHours / totalEmployees) : 0;
 
         // ورش هذا الشهر
@@ -294,10 +251,7 @@ export async function getDashboardData() {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
         const monthlyWorkshops = allWorkshops.filter(w => w.timestamp >= monthStart).length;
 
-        // آخر ورشة
         const lastWorkshop = allWorkshops.length > 0 ? allWorkshops[0] : null;
-
-        // آخر 10 ورش
         const recentWorkshops = allWorkshops.slice(0, 10);
 
         return {
@@ -313,7 +267,7 @@ export async function getDashboardData() {
             lastWorkshop,
             recentWorkshops,
             allWorkshops,
-            allEmployees: employees,
+            allEmployees,
             lastUpdated: new Date().toLocaleString('ar-SA')
         };
     } catch (error) {
@@ -326,20 +280,15 @@ export async function getDashboardData() {
 // REAL-TIME LISTENERS
 // ============================================
 
-// الاستماع للتحديثات الفورية
 export function listenToWorkshops(callback) {
     const q = query(
         collection(db, WORKSHOPS_COLLECTION),
         orderBy('timestamp', 'desc')
     );
-
     return onSnapshot(q, (snapshot) => {
         const workshops = [];
         snapshot.forEach(doc => {
-            workshops.push({
-                id: doc.id,
-                ...doc.data()
-            });
+            workshops.push({ id: doc.id, ...doc.data() });
         });
         callback(workshops);
     }, (error) => {
@@ -352,13 +301,17 @@ export function listenToEmployees(callback) {
         collection(db, EMPLOYEES_COLLECTION),
         orderBy('workshops', 'desc')
     );
-
     return onSnapshot(q, (snapshot) => {
         const employees = [];
         snapshot.forEach(doc => {
+            const data = doc.data();
             employees.push({
                 id: doc.id,
-                ...doc.data()
+                employeeId: data.employeeId || doc.id,
+                name: data.employeeName || data.name || data.employeeId || doc.id,
+                department: data.department || 'غير محدد',
+                workshops: data.workshops || data.workshopsCount || 0,
+                totalHours: data.totalHours || 0
             });
         });
         callback(employees);
@@ -368,14 +321,56 @@ export function listenToEmployees(callback) {
 }
 
 // ============================================
+// تحديث جميع إحصائيات الموظفين
+// ============================================
+export async function updateAllEmployeesStats() {
+    try {
+        const workshops = await getAllWorkshops();
+        const employeeMap = new Map();
+        
+        workshops.forEach(w => {
+            const id = w.employeeId;
+            if (!id) return;
+            
+            if (!employeeMap.has(id)) {
+                employeeMap.set(id, {
+                    employeeId: id,
+                    name: w.employeeName || w.name || id,
+                    department: w.department || 'غير محدد',
+                    workshops: 0,
+                    totalHours: 0
+                });
+            }
+            const emp = employeeMap.get(id);
+            emp.workshops += 1;
+            emp.totalHours += w.hours || 0;
+        });
+        
+        const batch = writeBatch(db);
+        for (const [id, data] of employeeMap) {
+            const docRef = doc(db, EMPLOYEES_COLLECTION, id);
+            batch.set(docRef, {
+                ...data,
+                updatedAt: new Date().toISOString()
+            });
+        }
+        await batch.commit();
+        
+        console.log('✅ تم تحديث إحصائيات', employeeMap.size, 'موظف');
+        return employeeMap.size;
+    } catch (error) {
+        console.error('❌ خطأ في تحديث الإحصائيات:', error);
+        return 0;
+    }
+}
+
+// ============================================
 // EXPORT
 // ============================================
 export default {
     addWorkshop,
     getAllWorkshops,
     getEmployeeWorkshops,
-    getWorkshopsByDate,
-    deleteWorkshop,
     updateEmployeeStats,
     getAllEmployees,
     getEmployee,
@@ -383,5 +378,6 @@ export default {
     getTopDepartments,
     getDashboardData,
     listenToWorkshops,
-    listenToEmployees
+    listenToEmployees,
+    updateAllEmployeesStats
 };
