@@ -10,25 +10,23 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/dark-mode.css">
 
-    <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a7a3a">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BTH">
     <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
 </head>
 <body>
-    <!-- Dark Mode Toggle -->
+
     <button class="dark-toggle" id="darkToggle"><i class="fas fa-moon"></i></button>
 
-    <!-- Language Selector -->
     <div class="lang-selector">
         <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
         <button class="lang-btn" data-lang="en">🇬🇧 English</button>
     </div>
 
-    <!-- HEADER -->
     <header class="header">
         <div class="container">
             <div class="header-content">
@@ -52,9 +50,6 @@
         </div>
     </header>
 
-    <!-- ============================================ -->
-    <!-- REGISTER PAGE -->
-    <!-- ============================================ -->
     <section class="register-page">
         <div class="container">
             <div class="page-header">
@@ -63,16 +58,14 @@
             </div>
 
             <div class="register-grid">
-                <!-- Registration Form -->
                 <div class="register-form-wrapper">
                     <form id="registerForm" class="register-form">
-                        <!-- Employee Info -->
                         <div class="form-section">
                             <h3><i class="fas fa-user"></i> <span data-i18n="employee_info">معلومات الموظف</span></h3>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label><span data-i18n="employee_id">الرقم الوظيفي</span> <span class="required">*</span></label>
-                                    <input type="text" id="employeeId" name="employeeId" placeholder="مثال: 12345" required>
+                                    <input type="text" id="employeeId" name="employeeId" placeholder="مثال: 32842" required>
                                 </div>
                                 <div class="form-group">
                                     <label><span data-i18n="employee_name">اسم الموظف</span> <span class="required">*</span></label>
@@ -87,7 +80,6 @@
                             </div>
                         </div>
 
-                        <!-- Workshop Info -->
                         <div class="form-section">
                             <h3><i class="fas fa-chalkboard-teacher"></i> <span data-i18n="workshop_info">معلومات الورشة</span></h3>
                             <div class="form-group">
@@ -118,7 +110,6 @@
                             </div>
                         </div>
 
-                        <!-- Actions -->
                         <div class="form-actions">
                             <button type="submit" class="btn-primary btn-lg">
                                 <i class="fas fa-save"></i> <span data-i18n="submit_workshop">تسجيل الورشة</span>
@@ -130,7 +121,6 @@
                     </form>
                 </div>
 
-                <!-- Tips Sidebar -->
                 <div class="register-tips">
                     <div class="tips-card">
                         <h3><i class="fas fa-lightbulb"></i> <span data-i18n="tip_title">نصائح للتسجيل</span></h3>
@@ -149,7 +139,6 @@
         </div>
     </section>
 
-    <!-- FOOTER -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -187,11 +176,9 @@
         </div>
     </footer>
 
-    <!-- SCRIPTS - Module Type -->
-    <script type="module">
-        import './js/i18n.js';
-        import './js/main.js';
-        import './js/register.js';
-    </script>
+    <!-- ✅ المسارات الصحيحة -->
+    <script type="module" src="assets/js/i18n.js"></script>
+    <script type="module" src="assets/js/main.js"></script>
+    <script type="module" src="assets/js/register.js"></script>
 </body>
 </html>
