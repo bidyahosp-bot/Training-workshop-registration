@@ -75,10 +75,10 @@ function showNoDataMessage() {
 }
 
 // ============================================
-// عرض الرسوم البيانية
+// عرض الرسوم البيانية - محسوبة حسب workshopDate
 // ============================================
 function renderCharts(data) {
-    // 1. Monthly Workshops Chart
+    // ✅ 1. Monthly Workshops Chart - حسب workshopDate
     const monthlyCanvas = document.getElementById('monthlyChart');
     if (!monthlyCanvas) return;
 
@@ -89,10 +89,13 @@ function renderCharts(data) {
     if (data.allWorkshops) {
         data.allWorkshops.forEach(function(w) {
             try {
+                // ✅ الأولوية: workshopDate (تاريخ الورشة الفعلي)
                 const dateToUse = w.workshopDate || w.date || w.timestamp;
                 const date = new Date(dateToUse);
                 if (!isNaN(date.getTime())) {
                     const month = date.getMonth();
+                    const year = date.getFullYear();
+                    // ✅ يمكن إضافة تصفية حسب السنة إذا أردت
                     monthlyData[month] = (monthlyData[month] || 0) + 1;
                 }
             } catch (e) {
@@ -107,7 +110,7 @@ function renderCharts(data) {
         data: {
             labels: months,
             datasets: [{
-                label: 'عدد الورش',
+                label: 'عدد الورش حسب تاريخ الورشة',
                 data: monthlyData,
                 backgroundColor: 'rgba(26, 122, 58, 0.7)',
                 borderColor: 'rgba(26, 122, 58, 1)',
@@ -118,12 +121,22 @@ function renderCharts(data) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            plugins: { 
+                legend: { 
+                    display: true,
+                    labels: { font: { family: 'Cairo' } }
+                } 
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true, 
+                    ticks: { stepSize: 1 } 
+                } 
+            }
         }
     });
 
-    // 2. Department Hours Chart
+    // ✅ 2. Department Hours Chart
     const deptCanvas = document.getElementById('departmentChart');
     if (!deptCanvas) return;
 
@@ -152,7 +165,7 @@ function renderCharts(data) {
         }
     });
 
-    // 3. Organizer Chart
+    // ✅ 3. Organizer Chart
     const orgCanvas = document.getElementById('organizerChart');
     if (!orgCanvas) return;
 
@@ -187,12 +200,19 @@ function renderCharts(data) {
         }
     });
 
-    // 4. Certificate Chart
+    // ✅ 4. Certificate Chart - دعم نعم/لا
     const certCanvas = document.getElementById('certificateChart');
     if (!certCanvas) return;
 
-    const hasCert = data.allWorkshops ? data.allWorkshops.filter(function(w) { return w.certificate === 'نعم'; }).length : 0;
-    const noCert = data.allWorkshops ? data.allWorkshops.filter(function(w) { return w.certificate === 'لا'; }).length : 0;
+    const hasCert = data.allWorkshops ? data.allWorkshops.filter(function(w) { 
+        const cert = String(w.certificate || '').toLowerCase();
+        return cert === 'نعم' || cert === 'yes' || cert === 'true' || cert === '1';
+    }).length : 0;
+    
+    const noCert = data.allWorkshops ? data.allWorkshops.filter(function(w) { 
+        const cert = String(w.certificate || '').toLowerCase();
+        return cert === 'لا' || cert === 'no' || cert === 'false' || cert === '0' || cert === '';
+    }).length : 0;
 
     if (charts.certificate) charts.certificate.destroy();
     charts.certificate = new Chart(certCanvas.getContext('2d'), {
@@ -215,13 +235,13 @@ function renderCharts(data) {
         }
     });
 
-    // 5. Top Employees Chart
+    // ✅ 5. Top Employees Chart
     const empCanvas = document.getElementById('topEmployeesChart');
     if (!empCanvas) return;
 
     const topEmp = data.topEmployees || [];
-    const empNames = topEmp.map(function(e) { return e.name; });
-    const empWorkshops = topEmp.map(function(e) { return e.workshops; });
+    const empNames = topEmp.map(function(e) { return e.name || e.employeeId; });
+    const empWorkshops = topEmp.map(function(e) { return e.workshops || 0; });
 
     if (charts.topEmployees) charts.topEmployees.destroy();
     charts.topEmployees = new Chart(empCanvas.getContext('2d'), {
@@ -271,7 +291,7 @@ function renderEmployeeReport(employees) {
                 <td>${emp.workshops || 0}</td>
                 <td>${emp.totalHours || 0}</td>
                 <td>
-                    <span class="badge" style="background:${badge.color}20; color:${badge.color};">
+                    <span class="badge" style="background:${badge.color}20; color:${badge.color}; padding:4px 12px; border-radius:20px; font-size:0.8rem;">
                         ${badge.emoji} ${badge.name}
                     </span>
                 </td>
@@ -304,9 +324,11 @@ function renderDepartmentReport(departments) {
                 <td>${dept.workshops}</td>
                 <td>${dept.totalHours || (dept.workshops * 8)}</td>
                 <td>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${rate}%; background: var(--primary);"></div>
-                        <span>${rate}%</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="flex:1; height:8px; background:var(--border); border-radius:10px; overflow:hidden;">
+                            <div style="width: ${rate}%; height:100%; background: var(--primary); border-radius:10px;"></div>
+                        </div>
+                        <span style="font-size:0.8rem; color:var(--text-secondary); min-width:40px;">${rate}%</span>
                     </div>
                 </td>
             </tr>
@@ -362,7 +384,7 @@ function generatePDFContent() {
     content.push('تقرير الأداء التدريبي');
     content.push('='.repeat(50));
     content.push('');
-    content.push('تاريخ التقرير: ' + today);
+    content.push('📅 تاريخ التقرير: ' + today);
     content.push('');
 
     content.push('📊 الملخص العام');
