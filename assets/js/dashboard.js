@@ -2,9 +2,8 @@
 // Dashboard JavaScript - BTH v3.0
 // ============================================
 
-// ✅ المسار الصحيح
 import { getDashboardData, listenToWorkshops } from './db-firestore.js';
-import { formatDate, getBadge, DEPT_ICONS } from './config.js';
+import { formatDate, getBadge, DEPT_ICONS, translateDepartment, getCurrentLang } from './i18n.js';
 
 let dashboardData = null;
 
@@ -24,7 +23,7 @@ export async function loadDashboardData() {
 
         const summary = dashboardData.summary || {};
 
-        // تحديث KPIs
+        // ✅ تحديث KPIs
         const kpiMap = {
             kpiTotalWorkshops: summary.totalWorkshops || 0,
             kpiTotalHours: summary.totalHours || 0,
@@ -43,23 +42,23 @@ export async function loadDashboardData() {
             updatedEl.textContent = dashboardData.lastUpdated || new Date().toLocaleString('ar-SA');
         }
 
-        // أفضل الموظفين
+        // ✅ أفضل الموظفين
         renderTopEmployees(dashboardData.topEmployees || []);
 
-        // أفضل الأقسام
+        // ✅ أفضل الأقسام (مع الترجمة)
         renderTopDepartments(dashboardData.topDepartments || []);
 
-        // آخر ورشة
+        // ✅ آخر ورشة
         renderLatestWorkshop(dashboardData.lastWorkshop);
 
-        // النشاط الأخير
+        // ✅ النشاط الأخير
         renderRecentActivity(dashboardData.recentWorkshops || []);
 
         console.log('✅ تم تحديث لوحة الشرف بنجاح');
         return dashboardData;
     } catch (error) {
         console.error('❌ خطأ:', error);
-        showDashboardError('حدث خطأ في الاتصال بقاعدة البيانات');
+        showDashboardError('حدث خطأ في الاتصال بقاعدة البيانات: ' + error.message);
     }
 }
 
@@ -83,7 +82,7 @@ function showDashboardError(message) {
         if (oldError) oldError.remove();
 
         container.insertAdjacentHTML('beforeend', `
-            <div class="error-message" style="text-align:center; padding:40px; background:var(--bg-card); border-radius:var(--radius); box-shadow:var(--shadow); margin-top:20px;">
+            <div class="error-message" style="text-align:center; padding:40px; background:var(--bg-card); border-radius:var(--radius-md); box-shadow:var(--shadow-md); margin-top:20px; border:1px solid var(--border);">
                 <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#e74c3c;"></i>
                 <p style="margin-top:15px; color:var(--text-secondary);">${message}</p>
                 <button onclick="location.reload()" class="btn-primary" style="margin-top:15px; padding:10px 30px; border:none; border-radius:var(--radius-sm); background:var(--primary); color:white; cursor:pointer;">
@@ -130,10 +129,8 @@ function renderTopEmployees(employees) {
 }
 
 // ============================================
-// عرض أفضل الأقسام
+// عرض أفضل الأقسام (مع الترجمة)
 // ============================================
-import { translateDepartment, getCurrentLang, DEPT_ICONS } from './i18n.js';
-
 function renderTopDepartments(departments) {
     const container = document.getElementById('topDepartments');
     if (!container) return;
@@ -152,24 +149,27 @@ function renderTopDepartments(departments) {
         const width = Math.min((dept.workshops / maxWorkshops) * 100, 100);
 
         return `
-            <div class="dept-item">
-                <div class="dept-rank">#${index + 1}</div>
-                <div class="dept-info">
-                    <div class="dept-name">${icon} ${deptLabel}</div>
-                    <div class="dept-stats">
+            <div class="dept-item" style="display:flex; align-items:center; gap:15px; padding:12px 15px; background:var(--bg-card); border-radius:var(--radius-sm); margin-bottom:10px; box-shadow:var(--shadow-sm); border:1px solid var(--border);">
+                <div class="dept-rank" style="font-weight:700; color:var(--primary); min-width:35px;">#${index + 1}</div>
+                <div class="dept-info" style="flex:1;">
+                    <div class="dept-name" style="font-weight:600;">${icon} ${deptLabel}</div>
+                    <div class="dept-stats" style="display:flex; gap:15px; font-size:0.8rem; color:var(--text-secondary);">
                         <span>📚 ${dept.workshops} ورشة</span>
                         <span>👥 ${dept.employees || 0} موظف</span>
                         <span>⏱️ ${dept.totalHours || 0} ساعة</span>
                     </div>
                 </div>
-                <div class="dept-progress">
-                    <div class="dept-bar" style="width: ${width}%"></div>
+                <div class="dept-progress" style="width:100px;">
+                    <div style="height:6px; background:var(--border); border-radius:10px; overflow:hidden;">
+                        <div style="width: ${width}%; height:100%; background:var(--primary); border-radius:10px;"></div>
+                    </div>
                     <span style="font-size:0.7rem; color:var(--text-secondary);">${Math.round(width)}%</span>
                 </div>
             </div>
         `;
     }).join('');
 }
+
 // ============================================
 // عرض آخر ورشة
 // ============================================
@@ -183,7 +183,7 @@ function renderLatestWorkshop(workshop) {
     }
 
     container.innerHTML = `
-        <div class="workshop-card" style="display:flex; align-items:center; gap:15px; padding:15px 20px; background:var(--bg-card); border-radius:var(--radius-sm); box-shadow:var(--shadow);">
+        <div class="workshop-card" style="display:flex; align-items:center; gap:15px; padding:15px 20px; background:var(--bg-card); border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); border:1px solid var(--border);">
             <div class="workshop-icon" style="font-size:2rem;">📌</div>
             <div class="workshop-info">
                 <div class="workshop-title" style="font-weight:600; font-size:1.1rem;">${workshop.workshopTitle || workshop.workshop || '-'}</div>
