@@ -1,172 +1,243 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة الشرف - Bidiya Hospital Training Hub</title>
+// ============================================
+// Dashboard JavaScript - BTH v3.0
+// ============================================
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/dark-mode.css">
+import { getDashboardData, listenToWorkshops } from './db-firestore.js';
+import { formatDate, getBadge, DEPT_ICONS, translateDepartment, getCurrentLang } from './i18n.js';
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a7a3a">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BTH">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
-</head>
-<body>
+let dashboardData = null;
 
-    <button class="dark-toggle" id="darkToggle"><i class="fas fa-moon"></i></button>
+// ============================================
+// تحميل بيانات لوحة الشرف
+// ============================================
+export async function loadDashboardData() {
+    try {
+        console.log('📡 جاري تحميل بيانات لوحة الشرف من Firestore...');
 
-    <div class="lang-selector">
-        <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
-        <button class="lang-btn" data-lang="en">🇬🇧 English</button>
-    </div>
+        dashboardData = await getDashboardData();
 
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <img src="assets/img/logo.png" alt="BTH Logo" class="logo-img" onerror="this.style.display='none'">
-                    <div>
-                        <h1 class="logo-title" data-i18n="app_name">منصة مستشفى بدية للتدريب والتطوير المهني</h1>
-                        <p class="logo-tagline" data-i18n="tagline">نتعلم اليوم... لنرعى أفضل غدًا</p>
+        if (!dashboardData) {
+            showDashboardError('حدث خطأ في تحميل البيانات');
+            return;
+        }
+
+        const summary = dashboardData.summary || {};
+
+        // ✅ تحديث KPIs
+        const kpiMap = {
+            kpiTotalWorkshops: summary.totalWorkshops || 0,
+            kpiTotalHours: summary.totalHours || 0,
+            kpiTotalEmployees: summary.totalEmployees || 0,
+            kpiMonthly: summary.monthlyWorkshops || 0,
+            kpiAvgHours: summary.avgHours || 0
+        };
+
+        Object.keys(kpiMap).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = kpiMap[id];
+        });
+
+        const updatedEl = document.getElementById('lastUpdated');
+        if (updatedEl) {
+            updatedEl.textContent = dashboardData.lastUpdated || new Date().toLocaleString('ar-SA');
+        }
+
+        // ✅ أفضل الموظفين
+        renderTopEmployees(dashboardData.topEmployees || []);
+
+        // ✅ أفضل الأقسام (مع الترجمة)
+        renderTopDepartments(dashboardData.topDepartments || []);
+
+        // ✅ آخر ورشة
+        renderLatestWorkshop(dashboardData.lastWorkshop);
+
+        // ✅ النشاط الأخير
+        renderRecentActivity(dashboardData.recentWorkshops || []);
+
+        console.log('✅ تم تحديث لوحة الشرف بنجاح');
+        return dashboardData;
+    } catch (error) {
+        console.error('❌ خطأ:', error);
+        showDashboardError('حدث خطأ في الاتصال بقاعدة البيانات: ' + error.message);
+    }
+}
+
+// ============================================
+// الإستماع للتحديثات الفورية
+// ============================================
+export function initRealtimeUpdates() {
+    listenToWorkshops((workshops) => {
+        console.log('🔄 تحديث فوري: تم تغيير الورش');
+        loadDashboardData();
+    });
+}
+
+// ============================================
+// عرض الأخطاء
+// ============================================
+function showDashboardError(message) {
+    const container = document.querySelector('.dashboard-page .container');
+    if (container) {
+        const oldError = container.querySelector('.error-message');
+        if (oldError) oldError.remove();
+
+        container.insertAdjacentHTML('beforeend', `
+            <div class="error-message" style="text-align:center; padding:40px; background:var(--bg-card); border-radius:var(--radius-md); box-shadow:var(--shadow-md); margin-top:20px; border:1px solid var(--border);">
+                <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#e74c3c;"></i>
+                <p style="margin-top:15px; color:var(--text-secondary);">${message}</p>
+                <button onclick="location.reload()" class="btn-primary" style="margin-top:15px; padding:10px 30px; border:none; border-radius:var(--radius-sm); background:var(--primary); color:white; cursor:pointer;">
+                    <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                </button>
+            </div>
+        `);
+    }
+}
+
+// ============================================
+// عرض أفضل الموظفين
+// ============================================
+function renderTopEmployees(employees) {
+    const container = document.getElementById('topEmployees');
+    if (!container) return;
+
+    if (!employees || employees.length === 0) {
+        container.innerHTML = '<p class="no-data">لا توجد بيانات كافية</p>';
+        return;
+    }
+
+    container.innerHTML = employees.map(function(emp, index) {
+        const medals = ['🥇', '🥈', '🥉'];
+        const rankClass = index === 0 ? 'first' : index === 1 ? 'second' : 'third';
+        const badge = getBadge(emp.workshops || 0);
+
+        return `
+            <div class="podium-item ${rankClass}">
+                <div class="podium-rank">${medals[index] || '🏅'}</div>
+                <div class="podium-name">${emp.name || emp.employeeId}</div>
+                <div class="podium-id">🆔 ${emp.employeeId || '-'}</div>
+                <div class="podium-badge" style="background: ${badge.color}20; color: ${badge.color}; padding:4px 12px; border-radius:20px; font-size:0.8rem;">
+                    ${badge.emoji} ${badge.name}
+                </div>
+                <div class="podium-stats" style="display:flex; gap:15px; margin-top:8px; font-size:0.85rem; color:var(--text-secondary);">
+                    <span>📚 ${emp.workshops || 0} ورشة</span>
+                    <span>⏱️ ${emp.totalHours || 0} ساعة</span>
+                </div>
+                <div class="podium-department" style="font-size:0.8rem; color:var(--text-muted);">${emp.department || 'قسم غير محدد'}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================
+// عرض أفضل الأقسام (مع الترجمة)
+// ============================================
+function renderTopDepartments(departments) {
+    const container = document.getElementById('topDepartments');
+    if (!container) return;
+
+    if (!departments || departments.length === 0) {
+        container.innerHTML = '<p class="no-data">لا توجد بيانات كافية</p>';
+        return;
+    }
+
+    const lang = getCurrentLang();
+    const maxWorkshops = departments[0]?.workshops || 1;
+
+    container.innerHTML = departments.map(function(dept, index) {
+        const icon = DEPT_ICONS[dept.name] || '🏢';
+        const deptLabel = translateDepartment(dept.name, lang);
+        const width = Math.min((dept.workshops / maxWorkshops) * 100, 100);
+
+        return `
+            <div class="dept-item" style="display:flex; align-items:center; gap:15px; padding:12px 15px; background:var(--bg-card); border-radius:var(--radius-sm); margin-bottom:10px; box-shadow:var(--shadow-sm); border:1px solid var(--border);">
+                <div class="dept-rank" style="font-weight:700; color:var(--primary); min-width:35px;">#${index + 1}</div>
+                <div class="dept-info" style="flex:1;">
+                    <div class="dept-name" style="font-weight:600;">${icon} ${deptLabel}</div>
+                    <div class="dept-stats" style="display:flex; gap:15px; font-size:0.8rem; color:var(--text-secondary);">
+                        <span>📚 ${dept.workshops} ورشة</span>
+                        <span>👥 ${dept.employees || 0} موظف</span>
+                        <span>⏱️ ${dept.totalHours || 0} ساعة</span>
                     </div>
                 </div>
-                <nav class="main-nav">
-                    <a href="index.html" data-i18n="nav_home">الرئيسية</a>
-                    <a href="dashboard.html" class="active" data-i18n="nav_dashboard">لوحة الشرف</a>
-                    <a href="workshops.html" data-i18n="nav_workshops">سجل الورش</a>
-                    <a href="register.html" data-i18n="nav_register">تسجيل ورشة</a>
-                    <a href="reports.html" data-i18n="nav_reports">التقارير</a>
-                    <a href="employee.html" data-i18n="nav_employee">صفحة الموظف</a>
-                    <a href="admin-workshops.html" class="admin-link">🔐 إدارة الورش</a>
-                    <a href="about.html" data-i18n="nav_about">عن المطور</a>
-                    
-                    
-                </nav>
+                <div class="dept-progress" style="width:100px;">
+                    <div style="height:6px; background:var(--border); border-radius:10px; overflow:hidden;">
+                        <div style="width: ${width}%; height:100%; background:var(--primary); border-radius:10px;"></div>
+                    </div>
+                    <span style="font-size:0.7rem; color:var(--text-secondary);">${Math.round(width)}%</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================
+// عرض آخر ورشة
+// ============================================
+function renderLatestWorkshop(workshop) {
+    const container = document.getElementById('latestWorkshop');
+    if (!container) return;
+
+    if (!workshop) {
+        container.innerHTML = '<p class="no-data">لا توجد ورش مسجلة بعد</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="workshop-card" style="display:flex; align-items:center; gap:15px; padding:15px 20px; background:var(--bg-card); border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); border:1px solid var(--border);">
+            <div class="workshop-icon" style="font-size:2rem;">📌</div>
+            <div class="workshop-info">
+                <div class="workshop-title" style="font-weight:600; font-size:1.1rem;">${workshop.workshopTitle || workshop.workshop || '-'}</div>
+                <div class="workshop-meta" style="display:flex; gap:15px; font-size:0.85rem; color:var(--text-secondary); flex-wrap:wrap;">
+                    <span>👤 ${workshop.employeeName || workshop.employee || '-'}</span>
+                    <span>🏢 ${workshop.department || 'قسم غير محدد'}</span>
+                    <span>⏱️ ${workshop.hours || 0} ساعة</span>
+                    <span>📅 ${formatDate(workshop.workshopDate || workshop.date || workshop.timestamp)}</span>
+                </div>
             </div>
         </div>
-    </header>
+    `;
+}
 
-    <section class="dashboard-page">
-        <div class="container">
-            <div class="page-header">
-                <h1>🏆 <span data-i18n="dashboard_title">لوحة الشرف</span></h1>
-                <p data-i18n="dashboard_subtitle">نحتفي بإنجازات زملائنا في التعلم والتطوير المهني</p>
-            </div>
+// ============================================
+// عرض النشاط الأخير
+// ============================================
+function renderRecentActivity(workshops) {
+    const container = document.getElementById('recentActivity');
+    if (!container) return;
 
-            <div class="kpi-grid" id="kpiGrid">
-                <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-number" id="kpiTotalWorkshops">0</span>
-                        <span class="kpi-label" data-i18n="total_workshops">إجمالي الورش</span>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-clock"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-number" id="kpiTotalHours">0</span>
-                        <span class="kpi-label" data-i18n="total_hours">إجمالي ساعات التدريب</span>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-users"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-number" id="kpiTotalEmployees">0</span>
-                        <span class="kpi-label" data-i18n="total_employees">الموظفين المشاركين</span>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-calendar-alt"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-number" id="kpiMonthly">0</span>
-                        <span class="kpi-label" data-i18n="monthly_workshops">ورش هذا الشهر</span>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon"><i class="fas fa-chart-bar"></i></div>
-                    <div class="kpi-info">
-                        <span class="kpi-number" id="kpiAvgHours">0</span>
-                        <span class="kpi-label" data-i18n="avg_hours">متوسط الساعات/موظف</span>
+    if (!workshops || workshops.length === 0) {
+        container.innerHTML = '<p class="no-data">لا يوجد نشاط حديث</p>';
+        return;
+    }
+
+    container.innerHTML = workshops.slice(0, 10).map(function(w) {
+        return `
+            <div class="activity-item" style="display:flex; align-items:flex-start; gap:12px; padding:10px 15px; border-bottom:1px solid var(--border);">
+                <div class="activity-dot" style="width:10px; height:10px; border-radius:50%; background:var(--primary); margin-top:6px; flex-shrink:0;"></div>
+                <div class="activity-content">
+                    <div class="activity-title" style="font-weight:500;">${w.workshopTitle || w.workshop || '-'}</div>
+                    <div class="activity-meta" style="display:flex; gap:12px; font-size:0.8rem; color:var(--text-secondary); flex-wrap:wrap;">
+                        <span>👤 ${w.employeeName || w.employee || '-'}</span>
+                        <span>🏢 ${w.department || 'قسم غير محدد'}</span>
+                        <span>⏱️ ${w.hours || 0} ساعة</span>
+                        <span>📅 ${formatDate(w.workshopDate || w.date || w.timestamp)}</span>
                     </div>
                 </div>
             </div>
+        `;
+    }).join('');
+}
 
-            <div class="dashboard-section">
-                <h2><i class="fas fa-trophy"></i> <span data-i18n="top_employees">أفضل الموظفين</span></h2>
-                <div class="podium-container" id="topEmployees"></div>
-            </div>
+// ============================================
+// تشغيل عند تحميل الصفحة
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 لوحة الشرف جاهزة (Firestore v3.0)');
+    loadDashboardData();
+    initRealtimeUpdates();
+});
 
-            <div class="dashboard-grid">
-                <div class="dashboard-section">
-                    <h2><i class="fas fa-building"></i> <span data-i18n="top_departments">أكثر الأقسام نشاطًا</span></h2>
-                    <div class="departments-list" id="topDepartments"></div>
-                </div>
-                <div class="dashboard-section">
-                    <h2><i class="fas fa-bolt"></i> <span data-i18n="latest_workshop">آخر ورشة</span></h2>
-                    <div id="latestWorkshop" class="latest-workshop"></div>
-                </div>
-            </div>
-
-            <div class="dashboard-section">
-                <h2><i class="fas fa-history"></i> <span data-i18n="recent_activity">النشاط الأخير</span></h2>
-                <div id="recentActivity" class="activity-timeline"></div>
-            </div>
-
-            <div class="last-updated">
-                <i class="fas fa-sync-alt"></i>
-                <span data-i18n="last_updated">آخر تحديث:</span>
-                <span id="lastUpdated">-</span>
-            </div>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <h3>🏥 Bidiya Hospital Training Hub</h3>
-                    <p data-i18n="footer_tagline">نتعلم اليوم... لنرعى أفضل غدًا</p>
-                </div>
-                <div class="footer-center">
-                    <p data-i18n="footer_copyright">© 2026 مستشفى بدية - جميع الحقوق محفوظة</p>
-                    <p class="footer-version">v3.0 | 🔥 Firestore | <span data-i18n="footer_pwa">تطبيق يعمل دون اتصال</span></p>
-                </div>
-                <div class="footer-developer">
-                    <div class="developer-badge">
-                        <span class="dev-icon">💎</span>
-                        <div class="dev-info">
-                            <span class="dev-name">JOUHARAH.IT</span>
-                            <span class="dev-role" data-i18n="dev_role">التطوير والبرمجة</span>
-                        </div>
-                    </div>
-                    <div class="dev-social">
-                        <a href="#" target="_blank"><i class="fas fa-globe"></i></a>
-                        <a href="#" target="_blank"><i class="fas fa-envelope"></i></a>
-                        <a href="#" target="_blank"><i class="fab fa-whatsapp"></i></a>
-                        <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p class="developer-credit">
-                    <span data-i18n="developed_by">تم التطوير بواسطة</span>
-                    <strong class="jouharah-text">💎 JOUHARAH.IT</strong>
-                    <span data-i18n="all_rights">© 2026</span>
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- ✅ المسارات الصحيحة -->
-    <script type="module" src="assets/js/i18n.js"></script>
-    <script type="module" src="assets/js/main.js"></script>
-    <script type="module" src="assets/js/dashboard.js"></script>
-</body>
-</html>
+export default {
+    loadDashboardData,
+    initRealtimeUpdates
+};
