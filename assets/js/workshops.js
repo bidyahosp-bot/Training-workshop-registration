@@ -4,7 +4,7 @@
 // ============================================
 
 import { getAllWorkshops } from './db-firestore.js';
-import { formatDate, DEPARTMENTS, DEPT_ICONS } from './config.js';
+import { formatDate, DEPT_ICONS, translateDepartment, getCurrentLang } from './i18n.js';
 
 let allWorkshops = [];
 let filteredWorkshops = [];
@@ -33,15 +33,18 @@ export async function loadWorkshops() {
     }
 }
 
+// ============================================
+// عرض الأخطاء
+// ============================================
 function showError(message) {
     const tbody = document.getElementById('workshopsBody');
     if (tbody) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="error-row">
-                    <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
+                <td colspan="8" class="error-row" style="text-align:center; padding:40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:10px; color:#e74c3c;"></i>
                     <p>${message}</p>
-                    <button onclick="loadWorkshops()" class="btn-primary" style="margin-top:15px;">
+                    <button onclick="location.reload()" class="btn-primary" style="margin-top:15px; padding:10px 20px; border:none; border-radius:var(--radius-sm); background:var(--primary); color:white; cursor:pointer;">
                         <i class="fas fa-sync-alt"></i> إعادة المحاولة
                     </button>
                 </td>
@@ -50,42 +53,79 @@ function showError(message) {
     }
 }
 
-import { t, getCurrentLang, DEPT_ICONS } from './i18n.js';
-
+// ============================================
+// تعبئة الفلاتر مع الترجمة
+// ============================================
 function populateFilters(workshops) {
     const lang = getCurrentLang();
+    
+    // ✅ استخراج الأقسام
+    const departments = [...new Set(workshops.map(w => w.department).filter(Boolean))];
+    
+    // ✅ استخراج السنوات
+    const years = [...new Set(workshops.map(w => {
+        try {
+            const date = new Date(w.workshopDate || w.date || w.timestamp);
+            return date.getFullYear();
+        } catch { return null; }
+    }).filter(Boolean))];
+
+    // ✅ تعبئة فلتر الأقسام
     const deptSelect = document.getElementById('filterDepartment');
     if (deptSelect) {
         const currentValue = deptSelect.value;
         deptSelect.innerHTML = '';
         
-        // ✅ الخيار الافتراضي
         const allOption = document.createElement('option');
         allOption.value = 'all';
         allOption.textContent = lang === 'ar' ? 'جميع الأقسام' : 'All Departments';
         deptSelect.appendChild(allOption);
-        
-        // ✅ الأقسام
-        const departments = [...new Set(workshops.map(w => w.department).filter(Boolean))];
+
         departments.sort().forEach(dept => {
             const option = document.createElement('option');
             option.value = dept;
             const icon = DEPT_ICONS[dept] || '🏢';
-            const label = lang === 'ar' ? dept : translateDepartment(dept, lang);
-            option.textContent = icon + ' ' + label;
+            const deptLabel = translateDepartment(dept, lang);
+            option.textContent = icon + ' ' + deptLabel;
             deptSelect.appendChild(option);
         });
         
         if (currentValue) deptSelect.value = currentValue;
     }
+
+    // ✅ تعبئة فلتر السنوات
+    const yearSelect = document.getElementById('filterYear');
+    if (yearSelect) {
+        const currentValue = yearSelect.value;
+        yearSelect.innerHTML = '';
+        
+        const allOption = document.createElement('option');
+        allOption.value = 'all';
+        allOption.textContent = lang === 'ar' ? 'جميع السنوات' : 'All Years';
+        yearSelect.appendChild(allOption);
+
+        years.sort().reverse().forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+        
+        if (currentValue) yearSelect.value = currentValue;
+    }
 }
+
+// ============================================
+// تطبيق الفلاتر
+// ============================================
 function applyFilters() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
     const department = document.getElementById('filterDepartment').value;
     const year = document.getElementById('filterYear').value;
     const month = document.getElementById('filterMonth').value;
 
     filteredWorkshops = allWorkshops.filter(w => {
+        // ✅ البحث
         const matchSearch = !searchTerm ||
             (w.employeeName && w.employeeName.toLowerCase().includes(searchTerm)) ||
             (w.employeeId && w.employeeId.toLowerCase().includes(searchTerm)) ||
@@ -93,8 +133,10 @@ function applyFilters() {
             (w.workshopTitle && w.workshopTitle.toLowerCase().includes(searchTerm)) ||
             (w.organizer && w.organizer.toLowerCase().includes(searchTerm));
 
+        // ✅ القسم
         const matchDept = department === 'all' || w.department === department;
 
+        // ✅ السنة
         let matchYear = true;
         if (year !== 'all') {
             try {
@@ -103,6 +145,7 @@ function applyFilters() {
             } catch { matchYear = false; }
         }
 
+        // ✅ الشهر
         let matchMonth = true;
         if (month !== 'all') {
             try {
@@ -119,6 +162,9 @@ function applyFilters() {
     updateResultsCount();
 }
 
+// ============================================
+// عرض الجدول
+// ============================================
 function renderTable() {
     const tbody = document.getElementById('workshopsBody');
     if (!tbody) return;
@@ -130,8 +176,8 @@ function renderTable() {
     if (!pageItems || pageItems.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="empty-row">
-                    <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
+                <td colspan="8" class="empty-row" style="text-align:center; padding:40px;">
+                    <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:10px; color:var(--text-muted);"></i>
                     لا توجد ورش تدريبية مطابقة للبحث
                 </td>
             </tr>
@@ -159,6 +205,9 @@ function renderTable() {
     renderPagination();
 }
 
+// ============================================
+// عرض الترقيم
+// ============================================
 function renderPagination() {
     const container = document.getElementById('pagination');
     if (!container) return;
@@ -184,11 +233,17 @@ function renderPagination() {
     });
 }
 
+// ============================================
+// تحديث عدد النتائج
+// ============================================
 function updateResultsCount() {
     const el = document.getElementById('resultsCount');
     if (el) el.textContent = filteredWorkshops.length;
 }
 
+// ============================================
+// تصدير إلى Excel
+// ============================================
 function exportToExcel() {
     if (!filteredWorkshops || filteredWorkshops.length === 0) {
         alert('لا توجد بيانات للتصدير');
@@ -218,9 +273,11 @@ function exportToExcel() {
     link.click();
 }
 
+// ============================================
 // أحداث الصفحة
+// ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 صفحة سجل الورش جاهزة (Firestore)');
+    console.log('📄 صفحة سجل الورش جاهزة (Firestore v3.0)');
     loadWorkshops();
 
     const searchInput = document.getElementById('searchInput');
