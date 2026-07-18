@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <!-- ✅ حماية صفحة الاستيراد -->
+<script>
+    // التحقق من حالة تسجيل الدخول
+    (function() {
+        const isAdmin = localStorage.getItem('bth_admin') === 'true';
+        if (!isAdmin) {
+            window.location.href = 'admin-login.html';
+        }
+    })();
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>استيراد البيانات - Bidiya Hospital Training Hub</title>
