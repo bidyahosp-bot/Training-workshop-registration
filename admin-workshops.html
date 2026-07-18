@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الورش - لوحة المدير</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/dark-mode.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a7a3a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+
+    <button class="dark-toggle" id="darkToggle"><i class="fas fa-moon"></i></button>
+
+    <div class="lang-selector">
+        <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
+        <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="assets/img/logo.png" alt="BTH Logo" class="logo-img">
+                    <div>
+                        <h1 class="logo-title">🔐 لوحة إدارة الورش</h1>
+                        <p class="logo-tagline">إدارة الورش التدريبية - صلاحيات المدير</p>
+                    </div>
+                </div>
+                <nav class="main-nav">
+                    <a href="index.html">الرئيسية</a>
+                    <a href="dashboard.html">لوحة الشرف</a>
+                    <a href="workshops.html">سجل الورش</a>
+                    <a href="register.html">تسجيل ورشة</a>
+                    <a href="reports.html">التقارير</a>
+                    <a href="employee.html">صفحة الموظف</a>
+                    <a href="admin-workshops.html" class="active">🔐 إدارة الورش</a>
+                    <a href="about.html">عن المطور</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="admin-page">
+        <div class="container">
+            <div class="page-header">
+                <h1>🔐 <span>إدارة الورش التدريبية</span></h1>
+                <p>حذف، تعديل، واستيراد انتقائي للورش</p>
+            </div>
+
+            <!-- أزرار الإدارة -->
+            <div class="admin-actions">
+                <button id="importSelectiveBtn" class="btn-primary btn-lg">
+                    <i class="fas fa-cloud-download-alt"></i> استيراد انتقائي (فترة زمنية)
+                </button>
+                <button id="refreshBtn" class="btn-secondary btn-lg">
+                    <i class="fas fa-sync-alt"></i> تحديث
+                </button>
+                <button id="rebuildStatsBtn" class="btn-info btn-lg">
+                    <i class="fas fa-chart-bar"></i> إعادة بناء الإحصائيات
+                </button>
+            </div>
+
+            <!-- جدول الورش -->
+            <div class="dashboard-section">
+                <h2><i class="fas fa-list"></i> جميع الورش</h2>
+                <div class="table-container">
+                    <table class="workshops-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الرقم الوظيفي</th>
+                                <th>اسم الموظف</th>
+                                <th>القسم</th>
+                                <th>عنوان الورشة</th>
+                                <th>ساعات</th>
+                                <th>التاريخ</th>
+                                <th>التحكم</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminWorkshopsBody">
+                            <tr>
+                                <td colspan="8" class="loading-row">
+                                    <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- نافذة تعديل الورشة                          -->
+    <!-- ============================================ -->
+    <div id="editModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> تعديل الورشة</h2>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>الرقم الوظيفي</label>
+                        <input type="text" id="editEmployeeId">
+                    </div>
+                    <div class="form-group">
+                        <label>اسم الموظف <span class="required">*</span></label>
+                        <input type="text" id="editEmployeeName" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>القسم</label>
+                    <input type="text" id="editDepartment">
+                </div>
+                <div class="form-group">
+                    <label>عنوان الورشة</label>
+                    <input type="text" id="editWorkshopTitle">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>عدد الساعات</label>
+                        <input type="number" id="editHours" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>التاريخ</label>
+                        <input type="date" id="editWorkshopDate">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>الجهة المنظمة</label>
+                        <input type="text" id="editOrganizer">
+                    </div>
+                    <div class="form-group">
+                        <label>شهادة حضور</label>
+                        <select id="editCertificate">
+                            <option value="نعم">✅ نعم</option>
+                            <option value="لا">❌ لا</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" onclick="saveEditWorkshop()">
+                        <i class="fas fa-save"></i> حفظ التعديلات
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">
+                        <i class="fas fa-times"></i> إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- نافذة استيراد انتقائي                      -->
+    <!-- ============================================ -->
+    <div id="importModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-cloud-download-alt"></i> استيراد انتقائي</h2>
+                <button class="modal-close" onclick="closeImportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>استيراد الورش من Google Sheets في فترة زمنية محددة (سيتم تجاهل المكررات)</p>
+                
+                <div class="form-group">
+                    <label>رابط API</label>
+                    <input type="text" id="apiUrl" class="form-control" 
+                           value="https://script.google.com/macros/s/AKfycbyRtL1k9KYcFMyKl_XI7aCVbXGPHlhNORWKbJ6RQxXPuNZ_BqG59T5x1mL-CborYAJo/exec">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>من تاريخ</label>
+                        <input type="date" id="importFromDate">
+                    </div>
+                    <div class="form-group">
+                        <label>إلى تاريخ</label>
+                        <input type="date" id="importToDate">
+                    </div>
+                </div>
+                
+                <div id="importStatus" style="margin: 10px 0; color: var(--text-secondary);"></div>
+                <div id="importResult" style="display:none; margin: 10px 0;"></div>
+                
+                <div class="form-actions">
+                    <button class="btn-primary" onclick="importSelective()">
+                        <i class="fas fa-cloud-download-alt"></i> استيراد
+                    </button>
+                    <button class="btn-secondary" onclick="closeImportModal()">
+                        <i class="fas fa-times"></i> إغلاق
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>🏥 Bidiya Hospital Training Hub</h3>
+                    <p>نتعلم اليوم... لنرعى أفضل غدًا</p>
+                </div>
+                <div class="footer-center">
+                    <p>© 2026 مستشفى بدية - جميع الحقوق محفوظة</p>
+                    <p class="footer-version">v3.0 | 🔥 Firestore | 🔐 إدارة المدير</p>
+                </div>
+                <div class="footer-developer">
+                    <div class="developer-badge">
+                        <span class="dev-icon">💎</span>
+                        <div class="dev-info">
+                            <span class="dev-name">JOUHARAH.IT</span>
+                            <span class="dev-role">التطوير والبرمجة</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================ -->
+    <!-- نافذة تأكيد الحذف                          -->
+    <!-- ============================================ -->
+    <div id="deleteModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:400px; text-align:center;">
+            <div style="font-size:3rem; margin:10px 0;">🗑️</div>
+            <h2>تأكيد الحذف</h2>
+            <p style="color:var(--text-secondary);">هل أنت متأكد من حذف هذه الورشة؟</p>
+            <p style="color:var(--danger); font-size:0.9rem;">⚠️ هذا الإجراء لا يمكن التراجع عنه</p>
+            <div class="form-actions" style="justify-content:center;">
+                <button id="confirmDeleteBtn" class="btn-danger">
+                    <i class="fas fa-trash"></i> حذف
+                </button>
+                <button class="btn-secondary" onclick="document.getElementById('deleteModal').style.display='none'">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCRIPTS                                    -->
+    <!-- ============================================ -->
+    <script type="importmap">
+        {
+            "imports": {
+                "../../firebase/firebase-init.js": "./firebase/firebase-init.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import './assets/js/i18n.js';
+        import './assets/js/main.js';
+        import adminWorkshops from './assets/js/admin-workshops.js';
+        import { rebuildAllEmployees } from './assets/js/db-firestore.js';
+
+        // ✅ عرض الورش
+        adminWorkshops.renderAdminWorkshops();
+
+        // ✅ استيراد انتقائي
+        document.getElementById('importSelectiveBtn').addEventListener('click', adminWorkshops.openImportModal);
+
+        // ✅ تحديث
+        document.getElementById('refreshBtn').addEventListener('click', adminWorkshops.renderAdminWorkshops);
+
+        // ✅ إعادة بناء الإحصائيات
+        document.getElementById('rebuildStatsBtn').addEventListener('click', async function() {
+            if (confirm('⚠️ سيتم إعادة بناء إحصائيات جميع الموظفين. هل تريد المتابعة؟')) {
+                const count = await rebuildAllEmployees();
+                showNotification(`✅ تم تحديث إحصائيات ${count} موظف`, 'success');
+                adminWorkshops.renderAdminWorkshops();
+            }
+        });
+
+        // ✅ جعل الدوال عامة للنوافذ المنبثقة
+        window.deleteWorkshop = adminWorkshops.deleteWorkshop;
+        window.openEditModal = adminWorkshops.openEditModal;
+        window.saveEditWorkshop = adminWorkshops.saveEditWorkshop;
+        window.closeEditModal = adminWorkshops.closeEditModal;
+        window.openImportModal = adminWorkshops.openImportModal;
+        window.closeImportModal = adminWorkshops.closeImportModal;
+        window.importSelective = adminWorkshops.importSelective;
+        window.showNotification = function(msg, type) {
+            const colors = {
+                success: '#27ae60',
+                error: '#e74c3c',
+                warning: '#f39c12',
+                info: '#3498db'
+            };
+            const notif = document.createElement('div');
+            notif.style.cssText = `
+                position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+                background: ${colors[type] || colors.info}; color: white;
+                padding: 14px 28px; border-radius: 14px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                z-index: 999999; font-weight: 600; font-size: 0.95rem;
+                animation: slideUp 0.4s ease; max-width: 90%; text-align: center;
+                font-family: 'Cairo', sans-serif; direction: rtl;
+            `;
+            notif.textContent = msg;
+            document.body.appendChild(notif);
+            setTimeout(() => {
+                notif.style.opacity = '0';
+                notif.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => notif.remove(), 500);
+            }, 5000);
+        };
+    </script>
+</body>
+</html>
