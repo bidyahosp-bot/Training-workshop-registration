@@ -51,46 +51,91 @@
         </div>
     </header>
 
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <div class="hero-text">
-                    <h1 data-i18n="hero_title">معًا نبني ثقافة التعلم المستمر في مستشفى بدية</h1>
-                    <p data-i18n="hero_subtitle">سجل مشاركاتك التدريبية وانضم إلى مجتمع التعلم</p>
-                    <div class="hero-buttons">
-                        <a href="register.html" class="btn-primary btn-lg">
-                            <i class="fas fa-plus-circle"></i> <span data-i18n="register_workshop">تسجيل ورشة جديدة</span>
-                        </a>
-                        <a href="workshops.html" class="btn-secondary btn-lg">
-                            <i class="fas fa-list"></i> <span data-i18n="browse_workshops">استعراض الورش</span>
-                        </a>
-                    </div>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat-card">
-                        <span class="stat-number" id="totalWorkshops">0</span>
-                        <span class="stat-label" data-i18n="total_workshops">إجمالي الورش</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" id="totalHours">0</span>
-                        <span class="stat-label" data-i18n="total_hours">إجمالي ساعات التدريب</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" id="totalEmployees">0</span>
-                        <span class="stat-label" data-i18n="total_employees">الموظفين المشاركين</span>
-                    </div>
-                    <div class="stat-card highlight">
-                        <span class="stat-number" id="topEmployee">-</span>
-                        <span class="stat-label" data-i18n="top_employee_label">أفضل موظف</span>
-                    </div>
-                    <div class="stat-card highlight">
-                        <span class="stat-number" id="lastEmployee">-</span>
-                        <span class="stat-label" data-i18n="last_registration_label">آخر تسجيل</span>
-                    </div>
+   <!-- ========================================== -->
+<!-- HERO STATS - بطاقات أفقية متوازية        -->
+<!-- ========================================== -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 data-i18n="hero_title">معًا نبني ثقافة التعلم المستمر في مستشفى بدية</h1>
+                <p data-i18n="hero_subtitle">سجل مشاركاتك التدريبية وانضم إلى مجتمع التعلم</p>
+                <div class="hero-buttons">
+                    <a href="register.html" class="btn-primary btn-lg">
+                        <i class="fas fa-plus-circle"></i> <span data-i18n="register_workshop">تسجيل ورشة جديدة</span>
+                    </a>
+                    <a href="workshops.html" class="btn-secondary btn-lg">
+                        <i class="fas fa-list"></i> <span data-i18n="browse_workshops">استعراض الورش</span>
+                    </a>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
+<!-- ========================================== -->
+<!-- STATS CARDS - تصميم أفقي متوازي           -->
+<!-- ========================================== -->
+<section class="stats-cards">
+    <div class="container">
+        <div class="stats-grid-horizontal">
+            <!-- كارد 1: إجمالي الورش -->
+            <div class="stat-card-horizontal">
+                <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #1a7a3a, #2a9d4a);">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number" id="totalWorkshops">0</span>
+                    <span class="stat-label" data-i18n="total_workshops">إجمالي الورش</span>
+                </div>
+            </div>
+
+            <!-- كارد 2: إجمالي الساعات -->
+            <div class="stat-card-horizontal">
+                <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #1976d2, #42a5f5);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number" id="totalHours">0</span>
+                    <span class="stat-label" data-i18n="total_hours">إجمالي الساعات</span>
+                </div>
+            </div>
+
+            <!-- كارد 3: الموظفين المشاركين -->
+            <div class="stat-card-horizontal">
+                <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #e67e22, #f39c12);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number" id="totalEmployees">0</span>
+                    <span class="stat-label" data-i18n="total_employees">الموظفين المشاركين</span>
+                </div>
+            </div>
+
+            <!-- كارد 4: أفضل موظف -->
+            <div class="stat-card-horizontal highlight">
+                <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #f1c40f, #f39c12);">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number" id="topEmployee">-</span>
+                    <span class="stat-label" data-i18n="top_employee_label">أفضل موظف</span>
+                </div>
+            </div>
+
+            <!-- كارد 5: آخر تسجيل -->
+            <div class="stat-card-horizontal highlight">
+                <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number" id="lastEmployee">-</span>
+                    <span class="stat-label" data-i18n="last_registration_label">آخر تسجيل</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
     <section class="features">
         <div class="container">
