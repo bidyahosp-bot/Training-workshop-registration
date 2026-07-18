@@ -75,37 +75,67 @@ function showNoDataMessage() {
 }
 
 // ============================================
-// عرض الرسوم البيانية - محسوبة حسب workshopDate
+// عرض الرسوم البيانية
 // ============================================
 function renderCharts(data) {
-    // ✅ 1. Monthly Workshops Chart - حسب workshopDate
-    const monthlyCanvas = document.getElementById('monthlyChart');
-    if (!monthlyCanvas) return;
+    renderMonthlyChart(data);
+    renderDepartmentChart(data);
+    renderOrganizerChart(data);
+    renderCertificateChart(data);
+    renderTopEmployeesChart(data);
+}
+
+// ============================================
+// ✅ 1. الرسم البياني للورش حسب الشهر
+// ============================================
+function renderMonthlyChart(data) {
+    const canvas = document.getElementById('monthlyChart');
+    if (!canvas) return;
 
     const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
         'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
     const monthlyData = Array(12).fill(0);
 
-    if (data.allWorkshops) {
-        data.allWorkshops.forEach(function(w) {
+    if (data.allWorkshops && data.allWorkshops.length > 0) {
+        console.log('📊 عدد الورش الكلي:', data.allWorkshops.length);
+        
+        data.allWorkshops.forEach(function(w, index) {
             try {
-                // ✅ الأولوية: workshopDate (تاريخ الورشة الفعلي)
-                const dateToUse = w.workshopDate || w.date || w.timestamp;
-                const date = new Date(dateToUse);
-                if (!isNaN(date.getTime())) {
-                    const month = date.getMonth();
-                    const year = date.getFullYear();
-                    // ✅ يمكن إضافة تصفية حسب السنة إذا أردت
-                    monthlyData[month] = (monthlyData[month] || 0) + 1;
+                // ✅ محاولة استخراج التاريخ من عدة مصادر
+                let dateStr = w.workshopDate || w.date || w.timestamp || w.workshop_date || '';
+                
+                // ✅ إذا كان التاريخ فارغاً، استخدم التاريخ الحالي
+                if (!dateStr) {
+                    console.warn(`⚠️ الورشة ${index + 1} ليس لها تاريخ، سيتم استخدام التاريخ الحالي`);
+                    dateStr = new Date().toISOString();
                 }
+                
+                const date = new Date(dateStr);
+                
+                // ✅ التحقق من صحة التاريخ
+                if (isNaN(date.getTime())) {
+                    console.warn(`⚠️ تاريخ غير صحيح للورشة ${index + 1}:`, dateStr);
+                    return;
+                }
+                
+                const month = date.getMonth();
+                const year = date.getFullYear();
+                
+                console.log(`📝 الورشة ${index + 1}: ${w.workshopTitle || 'بدون عنوان'} - التاريخ: ${dateStr} - الشهر: ${month + 1} (${months[month]}) - السنة: ${year}`);
+                
+                // ✅ زيادة عدد الورش في الشهر المناسب
+                monthlyData[month] = (monthlyData[month] || 0) + 1;
+                
             } catch (e) {
-                console.warn('⚠️ خطأ في تاريخ الورشة:', w);
+                console.warn(`⚠️ خطأ في معالجة تاريخ الورشة ${index + 1}:`, e);
             }
         });
     }
 
+    console.log('📊 توزيع الورش حسب الأشهر:', monthlyData);
+
     if (charts.monthly) charts.monthly.destroy();
-    charts.monthly = new Chart(monthlyCanvas.getContext('2d'), {
+    charts.monthly = new Chart(canvas.getContext('2d'), {
         type: 'bar',
         data: {
             labels: months,
@@ -135,17 +165,21 @@ function renderCharts(data) {
             }
         }
     });
+}
 
-    // ✅ 2. Department Hours Chart
-    const deptCanvas = document.getElementById('departmentChart');
-    if (!deptCanvas) return;
+// ============================================
+// ✅ 2. الرسم البياني للأقسام
+// ============================================
+function renderDepartmentChart(data) {
+    const canvas = document.getElementById('departmentChart');
+    if (!canvas) return;
 
     const deptData = data.topDepartments || [];
     const deptNames = deptData.map(function(d) { return d.name; });
     const deptHours = deptData.map(function(d) { return d.totalHours || d.workshops * 8; });
 
     if (charts.department) charts.department.destroy();
-    charts.department = new Chart(deptCanvas.getContext('2d'), {
+    charts.department = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: deptNames.length ? deptNames : ['لا توجد بيانات'],
@@ -164,10 +198,14 @@ function renderCharts(data) {
             }
         }
     });
+}
 
-    // ✅ 3. Organizer Chart
-    const orgCanvas = document.getElementById('organizerChart');
-    if (!orgCanvas) return;
+// ============================================
+// ✅ 3. الرسم البياني للجهات المنظمة
+// ============================================
+function renderOrganizerChart(data) {
+    const canvas = document.getElementById('organizerChart');
+    if (!canvas) return;
 
     const organizers = {};
     if (data.allWorkshops) {
@@ -180,7 +218,7 @@ function renderCharts(data) {
     const orgData = Object.values(organizers);
 
     if (charts.organizer) charts.organizer.destroy();
-    charts.organizer = new Chart(orgCanvas.getContext('2d'), {
+    charts.organizer = new Chart(canvas.getContext('2d'), {
         type: 'pie',
         data: {
             labels: orgLabels.length ? orgLabels : ['لا توجد بيانات'],
@@ -199,10 +237,14 @@ function renderCharts(data) {
             }
         }
     });
+}
 
-    // ✅ 4. Certificate Chart - دعم نعم/لا
-    const certCanvas = document.getElementById('certificateChart');
-    if (!certCanvas) return;
+// ============================================
+// ✅ 4. الرسم البياني للشهادات
+// ============================================
+function renderCertificateChart(data) {
+    const canvas = document.getElementById('certificateChart');
+    if (!canvas) return;
 
     const hasCert = data.allWorkshops ? data.allWorkshops.filter(function(w) { 
         const cert = String(w.certificate || '').toLowerCase();
@@ -215,7 +257,7 @@ function renderCharts(data) {
     }).length : 0;
 
     if (charts.certificate) charts.certificate.destroy();
-    charts.certificate = new Chart(certCanvas.getContext('2d'), {
+    charts.certificate = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: ['مع شهادة', 'بدون شهادة'],
@@ -234,17 +276,21 @@ function renderCharts(data) {
             }
         }
     });
+}
 
-    // ✅ 5. Top Employees Chart
-    const empCanvas = document.getElementById('topEmployeesChart');
-    if (!empCanvas) return;
+// ============================================
+// ✅ 5. الرسم البياني لأفضل الموظفين
+// ============================================
+function renderTopEmployeesChart(data) {
+    const canvas = document.getElementById('topEmployeesChart');
+    if (!canvas) return;
 
     const topEmp = data.topEmployees || [];
     const empNames = topEmp.map(function(e) { return e.name || e.employeeId; });
     const empWorkshops = topEmp.map(function(e) { return e.workshops || 0; });
 
     if (charts.topEmployees) charts.topEmployees.destroy();
-    charts.topEmployees = new Chart(empCanvas.getContext('2d'), {
+    charts.topEmployees = new Chart(canvas.getContext('2d'), {
         type: 'bar',
         data: {
             labels: empNames.length ? empNames : ['لا توجد بيانات'],
