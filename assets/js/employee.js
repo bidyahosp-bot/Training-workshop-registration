@@ -55,6 +55,8 @@ function showEmployeeError(message) {
     }
 }
 
+import { translateDepartment, getCurrentLang, DEPT_ICONS } from './i18n.js';
+
 function renderEmployeeList(employees) {
     const container = document.getElementById('employeeList');
     if (!container) return;
@@ -64,6 +66,7 @@ function renderEmployeeList(employees) {
         return;
     }
 
+    const lang = getCurrentLang();
     const displayList = employees.slice(0, 50);
 
     container.innerHTML = displayList.map(function(emp, index) {
@@ -72,6 +75,7 @@ function renderEmployeeList(employees) {
         const id = emp.employeeId || 'غير محدد';
         const name = emp.name || id;
         const dept = emp.department || 'قسم غير محدد';
+        const deptLabel = translateDepartment(dept, lang);
         const workshops = emp.workshops || 0;
         const hours = emp.totalHours || 0;
         const badge = getBadge(workshops);
@@ -84,7 +88,7 @@ function renderEmployeeList(employees) {
                 <div class="emp-info">
                     <div class="emp-name">${name}</div>
                     <div class="emp-id">🆔 ${id}</div>
-                    <div class="emp-dept">${icon} ${dept}</div>
+                    <div class="emp-dept">${icon} ${deptLabel}</div>
                 </div>
                 <div class="emp-stats">
                     <span>📚 ${workshops}</span>
@@ -96,7 +100,6 @@ function renderEmployeeList(employees) {
             </div>
         `;
     }).join('');
-
     // أحداث النقر
     container.querySelectorAll('.emp-view-btn').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
