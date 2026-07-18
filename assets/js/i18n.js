@@ -14,6 +14,7 @@ const translations = {
         "nav_reports": "التقارير",
         "nav_employee": "صفحة الموظف",
         "nav_about": "عن المطور",
+        "nav_import": "استيراد البيانات",
         
         // الصفحة الرئيسية
         "hero_title": "معًا نبني ثقافة التعلم المستمر في مستشفى بدية",
@@ -171,6 +172,7 @@ const translations = {
         "nav_reports": "Reports",
         "nav_employee": "Employee Profile",
         "nav_about": "About",
+        "nav_import": "Import Data",
         
         // Home
         "hero_title": "Together, we build a culture of continuous learning at Bidiya Hospital",
