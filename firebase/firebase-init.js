@@ -1,5 +1,5 @@
 // ============================================
-// Firebase Initialization - BTH
+// Firebase Initialization - BTH v3.0
 // ============================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -19,11 +19,9 @@ import {
     Timestamp,
     writeBatch,
     onSnapshot,
-    setDoc
+    setDoc,
+    getCountFromServer
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { 
-    getAnalytics 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
 // ============================================
 // Firebase Configuration
@@ -44,25 +42,20 @@ const firebaseConfig = {
 // ============================================
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const analytics = getAnalytics(app);
+
+console.log('🔥 Firebase initialized successfully');
 
 // ============================================
 // Collections
 // ============================================
-const WORKSHOPS_COLLECTION = 'workshops';
-const EMPLOYEES_COLLECTION = 'employees';
-const SYNC_STATUS_COLLECTION = 'syncStatus';
+export const WORKSHOPS_COLLECTION = 'workshops';
+export const EMPLOYEES_COLLECTION = 'employees';
 
 // ============================================
 // Export
 // ============================================
 export {
-    app,
     db,
-    analytics,
-    WORKSHOPS_COLLECTION,
-    EMPLOYEES_COLLECTION,
-    SYNC_STATUS_COLLECTION,
     collection,
     doc,
     getDocs,
@@ -77,5 +70,6 @@ export {
     Timestamp,
     writeBatch,
     onSnapshot,
-    setDoc
+    setDoc,
+    getCountFromServer
 };
