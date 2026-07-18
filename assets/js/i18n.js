@@ -382,6 +382,10 @@ function updateUI() {
         if (translated && translated !== key) {
             el.textContent = translated;
         }
+        const event = new CustomEvent('languageChanged');
+    document.dispatchEvent(event);
+    
+    console.log('✅ تم تحديث الترجمة');
     });
     
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
