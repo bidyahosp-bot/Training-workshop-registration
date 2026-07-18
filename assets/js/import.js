@@ -43,7 +43,7 @@ async function importData() {
     const apiUrl = apiUrlInput.value.trim();
     
     if (!apiUrl) {
-        showResult('error', 'https://api.allorigins.win/raw?url=https://script.google.com/macros/s/AKfycbz211s9Fz-bWxA0nffBZ9Tt8om2RdwlYXTZgkCZb_3l3vYoy_nt8svd4iNZMFZ7G9VG/exec');
+        showResult('error', 'https://script.google.com/macros/s/AKfycbyRtL1k9KYcFMyKl_XI7aCVbXGPHlhNORWKbJ6RQxXPuNZ_BqG59T5x1mL-CborYAJo/exec');
         return;
     }
 
