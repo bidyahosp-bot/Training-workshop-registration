@@ -22,6 +22,7 @@ const importBtn = document.getElementById('importBtn');
 const importCsvBtn = document.getElementById('importCsvBtn');
 const clearBtn = document.getElementById('clearBtn');
 const viewDataBtn = document.getElementById('viewDataBtn');
+const pasteToggleBtn = document.getElementById('pasteToggleBtn');
 const pasteImportBtn = document.getElementById('pasteImportBtn');
 const apiUrlInput = document.getElementById('apiUrl');
 const csvFileInput = document.getElementById('csvFileInput');
@@ -75,13 +76,19 @@ function setButtonsDisabled(disabled) {
         if (btn) {
             btn.disabled = disabled;
             btn.style.opacity = disabled ? '0.6' : '1';
+            btn.style.cursor = disabled ? 'not-allowed' : 'pointer';
         }
     });
 }
 
 function refreshAllPages() {
     console.log('✅ تم تحديث جميع الصفحات');
-    // يمكن إضافة تحديث للصفحات الأخرى هنا
+    // إعادة تحميل البيانات في الصفحات الأخرى
+    if (typeof loadHomePageData === 'function') loadHomePageData();
+    if (typeof loadDashboardData === 'function') loadDashboardData();
+    if (typeof loadWorkshops === 'function') loadWorkshops();
+    if (typeof loadEmployeeData === 'function') loadEmployeeData();
+    if (typeof loadReportData === 'function') loadReportData();
 }
 
 // ============================================
@@ -491,6 +498,9 @@ async function previewData() {
         if (previewDiv) previewDiv.style.display = 'block';
         const head = document.getElementById('previewHead');
         const body = document.getElementById('previewBody');
+        const countEl = document.getElementById('previewCount');
+
+        if (countEl) countEl.textContent = workshops.length;
 
         if (head && body) {
             const headers = ['#', 'الرقم الوظيفي', 'الموظف', 'القسم', 'عنوان الورشة', 'الساعات'];
@@ -520,12 +530,12 @@ async function previewData() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 صفحة استيراد البيانات جاهزة');
 
-    // استيراد من API
+    // ✅ استيراد من API
     if (importBtn) {
         importBtn.addEventListener('click', importData);
     }
 
-    // استيراد من CSV (ملف)
+    // ✅ استيراد من CSV (ملف)
     if (importCsvBtn && csvFileInput) {
         importCsvBtn.addEventListener('click', function() {
             csvFileInput.click();
@@ -539,12 +549,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // استيراد من النص الملصق
+    // ✅ إظهار/إخفاء منطقة اللصق
+    if (pasteToggleBtn && pasteArea) {
+        pasteToggleBtn.addEventListener('click', function() {
+            const isVisible = pasteArea.style.display !== 'none';
+            pasteArea.style.display = isVisible ? 'none' : 'block';
+            this.innerHTML = isVisible ? 
+                '<i class="fas fa-paste"></i> لصق البيانات' : 
+                '<i class="fas fa-times"></i> إخفاء اللصق';
+        });
+    }
+
+    // ✅ استيراد من النص الملصق
     if (pasteImportBtn) {
         pasteImportBtn.addEventListener('click', handlePasteImport);
     }
 
-    // مسح البيانات
+    // ✅ مسح البيانات
     if (clearBtn) {
         clearBtn.addEventListener('click', async function() {
             if (!confirm('⚠️ هل أنت متأكد من رغبتك في مسح جميع البيانات؟')) return;
@@ -562,22 +583,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // عرض البيانات
+    // ✅ عرض البيانات
     if (viewDataBtn) {
         viewDataBtn.addEventListener('click', previewData);
     }
 
-    // الرابط الافتراضي
+    // ✅ الرابط الافتراضي
     if (apiUrlInput && !apiUrlInput.value) {
         apiUrlInput.value = 'https://script.google.com/macros/s/AKfycbyRtL1k9KYcFMyKl_XI7aCVbXGPHlhNORWKbJ6RQxXPuNZ_BqG59T5x1mL-CborYAJo/exec';
-    }
-
-    // إظهار منطقة اللصق
-    const pasteToggle = document.getElementById('pasteToggle');
-    if (pasteToggle && pasteArea) {
-        pasteToggle.addEventListener('click', function() {
-            pasteArea.style.display = pasteArea.style.display === 'none' ? 'block' : 'none';
-        });
     }
 });
 
