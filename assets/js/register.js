@@ -2,7 +2,7 @@
 // Register JavaScript - BTH v3.0
 // ============================================
 
-import { addWorkshop } from './db-firestore.js';
+import { addWorkshop, rebuildAllEmployees } from './db-firestore.js';
 import { DEPARTMENTS } from './config.js';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -94,12 +94,17 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = true;
 
             try {
+                // ✅ إضافة الورشة
                 const result = await addWorkshop(workshopData);
 
                 if (result.success) {
+                    // ✅ إعادة بناء إحصائيات الموظفين للتأكد
+                    await rebuildAllEmployees();
+                    
                     showNotification('✅ تم تسجيل الورشة بنجاح!', 'success');
                     form.reset();
                     if (dateInput) dateInput.value = today;
+                    
                     // تحديث الصفحات الأخرى
                     refreshAllPages();
                 } else {
