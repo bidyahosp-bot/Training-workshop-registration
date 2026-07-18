@@ -183,8 +183,12 @@ async function importData() {
 // ============================================
 // 2. استيراد من CSV (ملف)
 // ============================================
+// ============================================
+// 2. استيراد من CSV (ملف) - متوافق مع العناوين الفعلية
+// ============================================
 async function importFromCSV(csvText) {
     try {
+        // تقسيم النص إلى سطور
         const lines = csvText.split('\n')
             .filter(line => line.trim())
             .map(line => line.split(',').map(cell => cell.trim()));
@@ -193,9 +197,11 @@ async function importFromCSV(csvText) {
             throw new Error('الملف فارغ أو لا يحتوي على بيانات');
         }
 
+        // قراءة العناوين
         const headers = lines[0];
         console.log('📋 العناوين:', headers);
 
+        // ✅ تحديد أسماء الأعمدة بناءً على العناوين الفعلية
         const colMap = {
             employeeId: -1,
             employeeName: -1,
@@ -204,40 +210,126 @@ async function importFromCSV(csvText) {
             hours: -1,
             organizer: -1,
             certificate: -1,
-            workshopDate: -1
+            workshopDate: -1,
+            timestamp: -1
         };
 
         headers.forEach((h, index) => {
-            const lower = h.toLowerCase();
-            if (lower.includes('رقم') || lower.includes('id')) colMap.employeeId = index;
-            else if (lower.includes('اسم') || lower.includes('name')) colMap.employeeName = index;
-            else if (lower.includes('قسم') || lower.includes('department')) colMap.department = index;
-            else if (lower.includes('عنوان') || lower.includes('title')) colMap.workshopTitle = index;
-            else if (lower.includes('ساع') || lower.includes('hours')) colMap.hours = index;
-            else if (lower.includes('جهة') || lower.includes('organizer')) colMap.organizer = index;
-            else if (lower.includes('شهادة') || lower.includes('certificate')) colMap.certificate = index;
-            else if (lower.includes('تاريخ') || lower.includes('date')) colMap.workshopDate = index;
+            const lower = h.toLowerCase().trim();
+            console.log(`🔍 العمود ${index}: "${h}"`);
+            
+            // ✅ الرقم الوظيفي - يدعم العربية والإنجليزية
+            if (lower.includes('رقم الموظف') || lower.includes('stuff number') || 
+                lower.includes('employee id') || lower.includes('employeeid') ||
+                lower.includes('staff number') || lower.includes('رقم') && lower.includes('موظف')) {
+                colMap.employeeId = index;
+                console.log(`   ✅ -> employeeId (${index})`);
+            }
+            // ✅ اسم الموظف - يدعم العربية والإنجليزية
+            else if (lower.includes('اسم الموظف') || lower.includes('staff name') || 
+                     lower.includes('employee name') || lower.includes('employeename') ||
+                     lower.includes('name') && !lower.includes('workshop')) {
+                colMap.employeeName = index;
+                console.log(`   ✅ -> employeeName (${index})`);
+            }
+            // ✅ القسم
+            else if (lower.includes('department') || lower.includes('dept') || 
+                     lower.includes('قسم') && !lower.includes('تدريب')) {
+                colMap.department = index;
+                console.log(`   ✅ -> department (${index})`);
+            }
+            // ✅ عنوان الورشة - يدعم العربية والإنجليزية
+            else if (lower.includes('عنوان فعالية') || lower.includes('name of workshop') || 
+                     lower.includes('workshop title') || lower.includes('workshoptitle') ||
+                     lower.includes('عنوان التدريب') || lower.includes('training')) {
+                colMap.workshopTitle = index;
+                console.log(`   ✅ -> workshopTitle (${index})`);
+            }
+            // ✅ عدد الساعات - يدعم العربية والإنجليزية
+            else if (lower.includes('عدد ساعات') || lower.includes('hours of training') || 
+                     lower.includes('hours') || lower.includes('hrs')) {
+                colMap.hours = index;
+                console.log(`   ✅ -> hours (${index})`);
+            }
+            // ✅ المكان / الجهة المنظمة
+            else if (lower.includes('المكان') || lower.includes('place') || 
+                     lower.includes('organizer') || lower.includes('org') ||
+                     lower.includes('location')) {
+                colMap.organizer = index;
+                console.log(`   ✅ -> organizer (${index})`);
+            }
+            // ✅ التاريخ
+            else if (lower.includes('التاريخ') || lower.includes('date') || 
+                     lower.includes('workshopdate') || lower.includes('workshop date')) {
+                colMap.workshopDate = index;
+                console.log(`   ✅ -> workshopDate (${index})`);
+            }
+            // ✅ شهادة حضور
+            else if (lower.includes('certificate') || lower.includes('شهادة') || 
+                     lower.includes('cert')) {
+                colMap.certificate = index;
+                console.log(`   ✅ -> certificate (${index})`);
+            }
+            // ✅ الطابع الزمني
+            else if (lower.includes('طابع زمني') || lower.includes('timestamp') || 
+                     lower.includes('time')) {
+                colMap.timestamp = index;
+                console.log(`   ✅ -> timestamp (${index})`);
+            }
         });
 
+        console.log('📋 خريطة الأعمدة النهائية:', colMap);
+
+        // ✅ التحقق من وجود الأعمدة الأساسية
+        if (colMap.employeeName === -1 && colMap.employeeId === -1) {
+            throw new Error('لم يتم العثور على عمود اسم الموظف أو الرقم الوظيفي');
+        }
+
+        if (colMap.workshopTitle === -1) {
+            console.warn('⚠️ لم يتم العثور على عمود عنوان الورشة، سيتم استخدام قيمة افتراضية');
+        }
+
+        // معالجة البيانات
         const workshops = [];
         for (let i = 1; i < lines.length; i++) {
             const row = lines[i];
             if (row.length < 2) continue;
 
+            // ✅ استخراج البيانات
+            const employeeId = colMap.employeeId >= 0 ? row[colMap.employeeId] || '' : '';
+            const employeeName = colMap.employeeName >= 0 ? row[colMap.employeeName] || '' : '';
+            const department = colMap.department >= 0 ? row[colMap.department] || '' : '';
+            const workshopTitle = colMap.workshopTitle >= 0 ? row[colMap.workshopTitle] || '' : '';
+            const hours = colMap.hours >= 0 ? parseFloat(row[colMap.hours]) || 0 : 0;
+            const organizer = colMap.organizer >= 0 ? row[colMap.organizer] || '' : '';
+            const certificate = colMap.certificate >= 0 ? row[colMap.certificate] || 'لا' : 'لا';
+            const workshopDate = colMap.workshopDate >= 0 ? row[colMap.workshopDate] || '' : '';
+            const timestamp = colMap.timestamp >= 0 ? row[colMap.timestamp] || '' : '';
+
+            console.log(`📝 الصف ${i}:`, { employeeId, employeeName, workshopTitle });
+
+            // ✅ التأكد من وجود اسم الموظف أو الرقم الوظيفي
+            if (!employeeName && !employeeId) {
+                console.warn(`⚠️ تخطي صف ${i} - لا يوجد اسم موظف أو رقم وظيفي`);
+                continue;
+            }
+
+            // ✅ التأكد من وجود عنوان الورشة
+            const finalTitle = workshopTitle || `ورشة ${i}`;
+
             const workshop = {
-                employeeId: colMap.employeeId >= 0 ? row[colMap.employeeId] || '' : '',
-                employeeName: colMap.employeeName >= 0 ? row[colMap.employeeName] || '' : '',
-                department: colMap.department >= 0 ? row[colMap.department] || '' : '',
-                workshopTitle: colMap.workshopTitle >= 0 ? row[colMap.workshopTitle] || '' : '',
-                hours: colMap.hours >= 0 ? parseFloat(row[colMap.hours]) || 0 : 0,
-                organizer: colMap.organizer >= 0 ? row[colMap.organizer] || '' : '',
-                certificate: colMap.certificate >= 0 ? row[colMap.certificate] || 'لا' : 'لا',
-                workshopDate: colMap.workshopDate >= 0 ? row[colMap.workshopDate] || new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+                employeeId: employeeId,
+                employeeName: employeeName,
+                department: department || 'غير محدد',
+                workshopTitle: finalTitle,
+                hours: hours,
+                organizer: organizer || 'غير محدد',
+                certificate: certificate,
+                workshopDate: workshopDate || new Date().toISOString().split('T')[0],
+                timestamp: timestamp || new Date().toISOString()
             };
 
-            if (workshop.employeeId || workshop.employeeName) {
-                workshops.push(workshop);
-            }
+            workshops.push(workshop);
         }
 
         console.log('📚 عدد الورش المستخرجة:', workshops.length);
