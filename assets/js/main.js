@@ -10,6 +10,9 @@ console.log(`🚀 ${APP_CONFIG.name} v${APP_CONFIG.version} - Firebase Firestore
 // ============================================
 // تحميل بيانات الصفحة الرئيسية
 // ============================================
+// ============================================
+// تحميل بيانات الصفحة الرئيسية
+// ============================================
 export async function loadHomePageData() {
     try {
         console.log('📡 جلب البيانات من Firestore...');
@@ -24,9 +27,15 @@ export async function loadHomePageData() {
             lastEmployee: document.getElementById('lastEmployee')
         };
 
-        if (elements.totalWorkshops) elements.totalWorkshops.textContent = summary.totalWorkshops || 0;
-        if (elements.totalHours) elements.totalHours.textContent = summary.totalHours || 0;
-        if (elements.totalEmployees) elements.totalEmployees.textContent = summary.totalEmployees || 0;
+        if (elements.totalWorkshops) {
+            elements.totalWorkshops.textContent = summary.totalWorkshops || 0;
+        }
+        if (elements.totalHours) {
+            elements.totalHours.textContent = summary.totalHours || 0;
+        }
+        if (elements.totalEmployees) {
+            elements.totalEmployees.textContent = summary.totalEmployees || 0;
+        }
 
         const topEmp = data.topEmployees?.[0];
         if (topEmp && elements.topEmployee) {
@@ -42,15 +51,9 @@ export async function loadHomePageData() {
         return data;
     } catch (error) {
         console.error('❌ خطأ في تحميل البيانات:', error);
-        document.querySelector('.hero')?.insertAdjacentHTML('beforeend', 
-            `<p style="color:red; text-align:center; padding:10px;">
-                ⚠️ حدث خطأ في تحميل البيانات. يرجى تحديث الصفحة.
-            </p>`
-        );
         return null;
     }
 }
-
 // ============================================
 // الوضع المظلم
 // ============================================
