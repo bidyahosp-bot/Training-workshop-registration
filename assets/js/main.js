@@ -2,7 +2,6 @@
 // Main JavaScript - Bidiya Training Hub v3.0
 // ============================================
 
-// ✅ المسار الصحيح
 import { getDashboardData } from './db-firestore.js';
 import { APP_CONFIG } from './config.js';
 
@@ -39,6 +38,7 @@ export async function loadHomePageData() {
             elements.lastEmployee.textContent = lastEmp.employeeName || lastEmp.employee || '-';
         }
 
+        console.log('✅ تم تحديث الصفحة الرئيسية بنجاح');
         return data;
     } catch (error) {
         console.error('❌ خطأ في تحميل البيانات:', error);
