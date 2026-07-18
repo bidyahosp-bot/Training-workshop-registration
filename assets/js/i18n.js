@@ -148,17 +148,17 @@ const translations = {
         
         // أقسام الموظفين
         "select_department": "اختر القسم",
-        "dept_doctors": "👨‍⚕️ الأطباء",
-        "dept_nursing": "👩‍⚕️ التمريض",
-        "dept_dressing": "🩹 التضميد",
-        "dept_pharmacy": "💊 الصيدلة",
-        "dept_radiology": "📷 الأشعة",
-        "dept_dentistry": "🦷 الأسنان",
-        "dept_laboratory": "🔬 المختبر",
-        "dept_medical_records": "📋 السجلات الطبية",
-        "dept_administration": "📊 الإدارة",
-        "dept_health_education": "📚 التثقيف الصحي",
-        "dept_nutrition": "🍎 التغذية"
+        "dept_doctors": "الأطباء",
+        "dept_nursing": "التمريض",
+        "dept_dressing": "التضميد",
+        "dept_pharmacy": "الصيدلة",
+        "dept_radiology": "الأشعة",
+        "dept_dentistry": "الأسنان",
+        "dept_laboratory": "المختبر",
+        "dept_medical_records": "السجلات الطبية",
+        "dept_administration": "الإدارة",
+        "dept_health_education": "التثقيف الصحي",
+        "dept_nutrition": "التغذية"
     },
     
     en: {
@@ -306,21 +306,25 @@ const translations = {
         
         // Employee Departments
         "select_department": "Select Department",
-        "dept_doctors": "👨‍⚕️ Doctors",
-        "dept_nursing": "👩‍⚕️ Nursing",
-        "dept_dressing": "🩹 Dressing",
-        "dept_pharmacy": "💊 Pharmacy",
-        "dept_radiology": "📷 Radiology",
-        "dept_dentistry": "🦷 Dentistry",
-        "dept_laboratory": "🔬 Laboratory",
-        "dept_medical_records": "📋 Medical Records",
-        "dept_administration": "📊 Administration",
-        "dept_health_education": "📚 Health Education",
-        "dept_nutrition": "🍎 Nutrition"
+        "dept_doctors": "Doctors",
+        "dept_nursing": "Nursing",
+        "dept_dressing": "Dressing",
+        "dept_pharmacy": "Pharmacy",
+        "dept_radiology": "Radiology",
+        "dept_dentistry": "Dentistry",
+        "dept_laboratory": "Laboratory",
+        "dept_medical_records": "Medical Records",
+        "dept_administration": "Administration",
+        "dept_health_education": "Health Education",
+        "dept_nutrition": "Nutrition"
     }
 };
 
 let currentLang = localStorage.getItem('bth_lang') || 'ar';
+
+// ============================================
+// الدوال الأساسية
+// ============================================
 
 export function t(key) {
     return translations[currentLang]?.[key] || key;
@@ -337,6 +341,10 @@ export function setLanguage(lang) {
 export function getCurrentLang() {
     return currentLang;
 }
+
+// ============================================
+// ترجمة الأقسام
+// ============================================
 
 export function translateDepartment(deptName, lang) {
     lang = lang || currentLang || 'ar';
@@ -373,21 +381,23 @@ export function translateDepartment(deptName, lang) {
     return deptMap[lang]?.[deptName] || deptName;
 }
 
+// ============================================
+// تحديث واجهة المستخدم
+// ============================================
+
 function updateUI() {
     console.log('🔄 تحديث الترجمة إلى:', currentLang);
     
+    // تحديث النصوص
     document.querySelectorAll('[data-i18n]').forEach(function(el) {
         const key = el.getAttribute('data-i18n');
         const translated = t(key);
         if (translated && translated !== key) {
             el.textContent = translated;
         }
-        const event = new CustomEvent('languageChanged');
-    document.dispatchEvent(event);
-    
-    console.log('✅ تم تحديث الترجمة');
     });
     
+    // تحديث الـ placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
         const key = el.getAttribute('data-i18n-placeholder');
         const translated = t(key);
@@ -396,46 +406,87 @@ function updateUI() {
         }
     });
     
+    // تحديث أزرار اللغة
     document.querySelectorAll('.lang-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.lang === currentLang);
     });
     
+    // تحديث اتجاه الصفحة
     document.documentElement.lang = currentLang;
     document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
     localStorage.setItem('bth_lang', currentLang);
     
+    // ✅ تحديث قوائم الأقسام
     updateDepartmentOptions();
+    
+    // ✅ إرسال حدث لتحديث الصفحات الأخرى (مثل register.js)
+    const event = new CustomEvent('languageChanged', { 
+        detail: { lang: currentLang } 
+    });
+    document.dispatchEvent(event);
+    
     console.log('✅ تم تحديث الترجمة');
 }
 
+// ============================================
+// تحديث قوائم الأقسام في الصفحة
+// ============================================
+
 function updateDepartmentOptions() {
-    const selects = document.querySelectorAll('select#department, select#filterDepartment');
-    
-    const departments = [
-        { value: '', key: 'select_department' },
-        { value: 'الأطباء', key: 'dept_doctors' },
-        { value: 'التمريض', key: 'dept_nursing' },
-        { value: 'التضميد', key: 'dept_dressing' },
-        { value: 'الصيدلة', key: 'dept_pharmacy' },
-        { value: 'الأشعة', key: 'dept_radiology' },
-        { value: 'الأسنان', key: 'dept_dentistry' },
-        { value: 'المختبر', key: 'dept_laboratory' },
-        { value: 'السجلات الطبية', key: 'dept_medical_records' },
-        { value: 'الإدارة', key: 'dept_administration' },
-        { value: 'التثقيف الصحي', key: 'dept_health_education' },
-        { value: 'التغذية', key: 'dept_nutrition' }
-    ];
+    // ✅ تحديث كل قوائم الأقسام في الصفحة
+    const selects = document.querySelectorAll('select#department, select#filterDepartment, select.department-select');
     
     selects.forEach(function(select) {
         if (!select) return;
         const currentValue = select.value;
         select.innerHTML = '';
+        
+        // ✅ الخيار الافتراضي
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = currentLang === 'ar' ? 'اختر القسم' : 'Select Department';
+        select.appendChild(defaultOption);
+        
+        // ✅ الأقسام
+        const departments = [
+            { value: 'الأطباء', key: 'dept_doctors' },
+            { value: 'التمريض', key: 'dept_nursing' },
+            { value: 'التضميد', key: 'dept_dressing' },
+            { value: 'الصيدلة', key: 'dept_pharmacy' },
+            { value: 'الأشعة', key: 'dept_radiology' },
+            { value: 'الأسنان', key: 'dept_dentistry' },
+            { value: 'المختبر', key: 'dept_laboratory' },
+            { value: 'السجلات الطبية', key: 'dept_medical_records' },
+            { value: 'الإدارة', key: 'dept_administration' },
+            { value: 'التثقيف الصحي', key: 'dept_health_education' },
+            { value: 'التغذية', key: 'dept_nutrition' }
+        ];
+        
+        // ✅ الأيقونات
+        const icons = {
+            'الأطباء': '👨‍⚕️',
+            'التمريض': '👩‍⚕️',
+            'التضميد': '🩹',
+            'الصيدلة': '💊',
+            'الأشعة': '📷',
+            'الأسنان': '🦷',
+            'المختبر': '🔬',
+            'السجلات الطبية': '📋',
+            'الإدارة': '📊',
+            'التثقيف الصحي': '📚',
+            'التغذية': '🍎'
+        };
+        
         departments.forEach(function(dept) {
             const option = document.createElement('option');
             option.value = dept.value;
-            option.textContent = t(dept.key);
+            const label = t(dept.key);
+            const icon = icons[dept.value] || '🏢';
+            option.textContent = icon + ' ' + label;
             select.appendChild(option);
         });
+        
+        // ✅ استعادة القيمة المحددة
         if (currentValue) {
             select.value = currentValue;
         }
@@ -445,15 +496,18 @@ function updateDepartmentOptions() {
 // ============================================
 // تحميل الصفحة
 // ============================================
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 i18n جاهز (Firestore)');
     
+    // ✅ أزرار اللغة
     document.querySelectorAll('.lang-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             setLanguage(this.dataset.lang);
         });
     });
     
+    // ✅ تحديث الواجهة
     updateUI();
 });
 
