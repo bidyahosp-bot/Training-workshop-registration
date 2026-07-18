@@ -2,7 +2,7 @@
 // Firestore Database Functions - BTH v3.0
 // ============================================
 
-// ✅ المسار الصحيح من assets/js/ إلى firebase/
+// ✅ المسار الصحيح من assets/js/ إلى firebase/ (مستوى الجذر)
 import {
     db,
     WORKSHOPS_COLLECTION,
@@ -52,6 +52,7 @@ export async function addWorkshop(workshopData) {
 
 export async function getAllWorkshops() {
     try {
+        console.log('📡 جلب جميع الورش من Firestore...');
         const q = query(
             collection(db, WORKSHOPS_COLLECTION),
             orderBy('timestamp', 'desc')
@@ -125,6 +126,7 @@ export async function updateEmployeeStats(employeeId) {
 
 export async function getAllEmployees() {
     try {
+        console.log('📡 جلب جميع الموظفين من Firestore...');
         const q = query(
             collection(db, EMPLOYEES_COLLECTION),
             orderBy('workshops', 'desc')
@@ -209,6 +211,7 @@ export async function getTopDepartments(limitCount = 5) {
 
 export async function getDashboardData() {
     try {
+        console.log('📡 جلب بيانات لوحة الشرف...');
         const [allWorkshops, topEmployees, topDepartments, allEmployees] = await Promise.all([
             getAllWorkshops(),
             getTopEmployees(3),
