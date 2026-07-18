@@ -220,4 +220,32 @@ function renderRecentActivity(workshops) {
 
     container.innerHTML = workshops.slice(0, 10).map(function(w) {
         return `
-            <div class="
+            <div class="activity-item" style="display:flex; align-items:flex-start; gap:12px; padding:10px 15px; border-bottom:1px solid var(--border);">
+                <div class="activity-dot" style="width:10px; height:10px; border-radius:50%; background:var(--primary); margin-top:6px; flex-shrink:0;"></div>
+                <div class="activity-content">
+                    <div class="activity-title" style="font-weight:500;">${w.workshopTitle || w.workshop || '-'}</div>
+                    <div class="activity-meta" style="display:flex; gap:12px; font-size:0.8rem; color:var(--text-secondary); flex-wrap:wrap;">
+                        <span>👤 ${w.employeeName || w.employee || '-'}</span>
+                        <span>🏢 ${w.department || 'قسم غير محدد'}</span>
+                        <span>⏱️ ${w.hours || 0} ساعة</span>
+                        <span>📅 ${formatDate(w.workshopDate || w.date || w.timestamp)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================
+// تشغيل عند تحميل الصفحة
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 لوحة الشرف جاهزة (Firestore v3.0)');
+    loadDashboardData();
+    initRealtimeUpdates();
+});
+
+export default {
+    loadDashboardData,
+    initRealtimeUpdates
+};
