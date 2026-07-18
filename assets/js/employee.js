@@ -3,7 +3,8 @@
 // ============================================
 
 import { getAllEmployees, getAllWorkshops, getEmployeeWorkshops, rebuildAllEmployees } from './db-firestore.js';
-import { formatDate, getBadge, DEPT_ICONS } from './config.js';
+import { formatDate, getBadge } from './config.js';
+import { translateDepartment, getCurrentLang, DEPT_ICONS } from './i18n.js';
 
 let allEmployees = [];
 let allWorkshops = [];
@@ -40,6 +41,9 @@ export async function loadEmployeeData() {
     }
 }
 
+// ============================================
+// عرض الأخطاء
+// ============================================
 function showEmployeeError(message) {
     const container = document.getElementById('employeeList');
     if (container) {
@@ -55,8 +59,9 @@ function showEmployeeError(message) {
     }
 }
 
-import { translateDepartment, getCurrentLang, DEPT_ICONS } from './i18n.js';
-
+// ============================================
+// عرض قائمة الموظفين
+// ============================================
 function renderEmployeeList(employees) {
     const container = document.getElementById('employeeList');
     if (!container) return;
@@ -100,7 +105,8 @@ function renderEmployeeList(employees) {
             </div>
         `;
     }).join('');
-    // أحداث النقر
+
+    // ✅ أحداث النقر
     container.querySelectorAll('.emp-view-btn').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -128,7 +134,7 @@ export async function viewEmployeeProfile(id) {
         return;
     }
 
-    // البحث في allEmployees
+    // ✅ البحث في allEmployees
     let employee = allEmployees.find(function(e) {
         return e.employeeId === id;
     });
@@ -153,7 +159,7 @@ export async function viewEmployeeProfile(id) {
     const profile = document.getElementById('employeeProfile');
     if (profile) profile.style.display = 'block';
 
-    // تحديث المعلومات
+    // ✅ تحديث المعلومات
     const name = employee.name || employee.employeeId;
     document.getElementById('profileName').textContent = name;
     document.getElementById('profileEmployeeId').textContent = employee.employeeId;
@@ -174,13 +180,13 @@ export async function viewEmployeeProfile(id) {
     }) + 1;
     document.getElementById('profileRank').textContent = '#' + (rank > 0 ? rank : 'N/A');
 
-    // التقدم
+    // ✅ التقدم
     updateProgress(employee.workshops || 0);
 
-    // عرض ورش الموظف
+    // ✅ عرض ورش الموظف
     await renderEmployeeWorkshops(employee.employeeId);
 
-    // عرض الإنجازات
+    // ✅ عرض الإنجازات
     renderAchievementsHorizontal(employee.workshops || 0);
 
     if (profile) {
@@ -197,7 +203,7 @@ async function renderEmployeeWorkshops(id) {
     const tbody = document.getElementById('profileWorkshopsBody');
     if (!tbody) return;
 
-    // جلب ورش الموظف من Firestore
+    // ✅ جلب ورش الموظف من Firestore
     const workshops = await getEmployeeWorkshops(id);
 
     console.log('📚 عدد ورش الموظف:', workshops.length);
