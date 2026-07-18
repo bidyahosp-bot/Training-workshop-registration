@@ -132,6 +132,8 @@ function renderTopEmployees(employees) {
 // ============================================
 // عرض أفضل الأقسام
 // ============================================
+import { translateDepartment, getCurrentLang, DEPT_ICONS } from './i18n.js';
+
 function renderTopDepartments(departments) {
     const container = document.getElementById('topDepartments');
     if (!container) return;
@@ -141,34 +143,33 @@ function renderTopDepartments(departments) {
         return;
     }
 
+    const lang = getCurrentLang();
     const maxWorkshops = departments[0]?.workshops || 1;
 
     container.innerHTML = departments.map(function(dept, index) {
         const icon = DEPT_ICONS[dept.name] || '🏢';
+        const deptLabel = translateDepartment(dept.name, lang);
         const width = Math.min((dept.workshops / maxWorkshops) * 100, 100);
 
         return `
-            <div class="dept-item" style="display:flex; align-items:center; gap:15px; padding:12px 15px; background:var(--bg-card); border-radius:var(--radius-sm); margin-bottom:10px; box-shadow:var(--shadow);">
-                <div class="dept-rank" style="font-weight:700; color:var(--primary); min-width:35px;">#${index + 1}</div>
-                <div class="dept-info" style="flex:1;">
-                    <div class="dept-name" style="font-weight:600;">${icon} ${dept.name}</div>
-                    <div class="dept-stats" style="display:flex; gap:15px; font-size:0.8rem; color:var(--text-secondary);">
+            <div class="dept-item">
+                <div class="dept-rank">#${index + 1}</div>
+                <div class="dept-info">
+                    <div class="dept-name">${icon} ${deptLabel}</div>
+                    <div class="dept-stats">
                         <span>📚 ${dept.workshops} ورشة</span>
                         <span>👥 ${dept.employees || 0} موظف</span>
                         <span>⏱️ ${dept.totalHours || 0} ساعة</span>
                     </div>
                 </div>
-                <div class="dept-progress" style="width:100px;">
-                    <div style="height:6px; background:var(--border); border-radius:10px; overflow:hidden;">
-                        <div style="width: ${width}%; height:100%; background:var(--primary); border-radius:10px;"></div>
-                    </div>
+                <div class="dept-progress">
+                    <div class="dept-bar" style="width: ${width}%"></div>
                     <span style="font-size:0.7rem; color:var(--text-secondary);">${Math.round(width)}%</span>
                 </div>
             </div>
         `;
     }).join('');
 }
-
 // ============================================
 // عرض آخر ورشة
 // ============================================
