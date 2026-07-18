@@ -2,7 +2,13 @@
 // Import Data - BTH v3.0
 // استيراد البيانات من Google Sheets أو CSV إلى Firestore
 // ============================================
-
+// ✅ التحقق من صلاحيات المدير
+(function checkAdmin() {
+    const isAdmin = localStorage.getItem('bth_admin') === 'true';
+    if (!isAdmin) {
+        window.location.href = 'admin-login.html';
+    }
+})();
 import { 
     db,
     WORKSHOPS_COLLECTION,
