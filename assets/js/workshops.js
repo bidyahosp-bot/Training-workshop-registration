@@ -50,51 +50,35 @@ function showError(message) {
     }
 }
 
-function populateFilters(workshops) {
-    const departments = [...new Set(workshops.map(w => w.department).filter(Boolean))];
-    const years = [...new Set(workshops.map(w => {
-        try {
-            const date = new Date(w.workshopDate || w.date || w.timestamp);
-            return date.getFullYear();
-        } catch { return null; }
-    }).filter(Boolean))];
+import { t, getCurrentLang, DEPT_ICONS } from './i18n.js';
 
-    // تعبئة فلتر الأقسام
+function populateFilters(workshops) {
+    const lang = getCurrentLang();
     const deptSelect = document.getElementById('filterDepartment');
     if (deptSelect) {
+        const currentValue = deptSelect.value;
         deptSelect.innerHTML = '';
+        
+        // ✅ الخيار الافتراضي
         const allOption = document.createElement('option');
         allOption.value = 'all';
-        allOption.textContent = 'جميع الأقسام';
+        allOption.textContent = lang === 'ar' ? 'جميع الأقسام' : 'All Departments';
         deptSelect.appendChild(allOption);
-
+        
+        // ✅ الأقسام
+        const departments = [...new Set(workshops.map(w => w.department).filter(Boolean))];
         departments.sort().forEach(dept => {
             const option = document.createElement('option');
             option.value = dept;
             const icon = DEPT_ICONS[dept] || '🏢';
-            option.textContent = icon + ' ' + dept;
+            const label = lang === 'ar' ? dept : translateDepartment(dept, lang);
+            option.textContent = icon + ' ' + label;
             deptSelect.appendChild(option);
         });
-    }
-
-    // تعبئة فلتر السنوات
-    const yearSelect = document.getElementById('filterYear');
-    if (yearSelect) {
-        yearSelect.innerHTML = '';
-        const allOption = document.createElement('option');
-        allOption.value = 'all';
-        allOption.textContent = 'جميع السنوات';
-        yearSelect.appendChild(allOption);
-
-        years.sort().reverse().forEach(year => {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            yearSelect.appendChild(option);
-        });
+        
+        if (currentValue) deptSelect.value = currentValue;
     }
 }
-
 function applyFilters() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const department = document.getElementById('filterDepartment').value;
