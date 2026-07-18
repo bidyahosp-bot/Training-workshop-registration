@@ -4,7 +4,22 @@
 
 import { getAllEmployees, getAllWorkshops, getEmployeeWorkshops, rebuildAllEmployees } from './db-firestore.js';
 import { formatDate, getBadge } from './config.js';
-import { translateDepartment, getCurrentLang, DEPT_ICONS } from './i18n.js';
+import { translateDepartment, getCurrentLang } from './i18n.js';
+
+// ✅ أيقونات الأقسام (مضافة محلياً)
+const DEPT_ICONS = {
+    'الأطباء': '👨‍⚕️',
+    'التمريض': '👩‍⚕️',
+    'التضميد': '🩹',
+    'الصيدلة': '💊',
+    'الأشعة': '📷',
+    'الأسنان': '🦷',
+    'المختبر': '🔬',
+    'السجلات الطبية': '📋',
+    'الإدارة': '📊',
+    'التثقيف الصحي': '📚',
+    'التغذية': '🍎'
+};
 
 let allEmployees = [];
 let allWorkshops = [];
@@ -16,7 +31,6 @@ export async function loadEmployeeData() {
     try {
         console.log('📡 جاري تحميل بيانات الموظفين من Firestore...');
 
-        // ✅ إعادة بناء الإحصائيات أولاً للتأكد من وجود البيانات
         await rebuildAllEmployees();
 
         const [employees, workshops] = await Promise.all([
@@ -106,7 +120,6 @@ function renderEmployeeList(employees) {
         `;
     }).join('');
 
-    // ✅ أحداث النقر
     container.querySelectorAll('.emp-view-btn').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -134,7 +147,6 @@ export async function viewEmployeeProfile(id) {
         return;
     }
 
-    // ✅ البحث في allEmployees
     let employee = allEmployees.find(function(e) {
         return e.employeeId === id;
     });
@@ -159,7 +171,6 @@ export async function viewEmployeeProfile(id) {
     const profile = document.getElementById('employeeProfile');
     if (profile) profile.style.display = 'block';
 
-    // ✅ تحديث المعلومات
     const name = employee.name || employee.employeeId;
     document.getElementById('profileName').textContent = name;
     document.getElementById('profileEmployeeId').textContent = employee.employeeId;
@@ -180,13 +191,8 @@ export async function viewEmployeeProfile(id) {
     }) + 1;
     document.getElementById('profileRank').textContent = '#' + (rank > 0 ? rank : 'N/A');
 
-    // ✅ التقدم
     updateProgress(employee.workshops || 0);
-
-    // ✅ عرض ورش الموظف
     await renderEmployeeWorkshops(employee.employeeId);
-
-    // ✅ عرض الإنجازات
     renderAchievementsHorizontal(employee.workshops || 0);
 
     if (profile) {
@@ -203,7 +209,6 @@ async function renderEmployeeWorkshops(id) {
     const tbody = document.getElementById('profileWorkshopsBody');
     if (!tbody) return;
 
-    // ✅ جلب ورش الموظف من Firestore
     const workshops = await getEmployeeWorkshops(id);
 
     console.log('📚 عدد ورش الموظف:', workshops.length);
