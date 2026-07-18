@@ -10,14 +10,10 @@ import {
     collection,
     doc,
     getDocs,
-    addDoc,
-    deleteDoc,
     writeBatch,
     setDoc,
     Timestamp
 } from '../../firebase/firebase-init.js';
-
-import { rebuildAllEmployees } from './db-firestore.js';
 
 // ============================================
 // العناصر
@@ -31,12 +27,11 @@ const rebuildStatsCheck = document.getElementById('rebuildStats');
 const progressDiv = document.getElementById('importProgress');
 const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
-const progressCount = document.getElementById('progressCount');
 const resultDiv = document.getElementById('importResult');
 const previewDiv = document.getElementById('dataPreview');
 
 // ============================================
-// استيراد البيانات
+// دالة الاستيراد الرئيسية
 // ============================================
 async function importData() {
     const apiUrl = apiUrlInput.value.trim();
@@ -48,47 +43,46 @@ async function importData() {
 
     console.log('📡 بدء الاستيراد من:', apiUrl);
 
-    // تعطيل الأزرار
     setButtonsDisabled(true);
     showProgress(true);
     updateProgress(5, 'جاري الاتصال بالخادم...');
 
     try {
-        // 1. جلب البيانات من Google Sheets
+        // 1. جلب البيانات
         updateProgress(10, 'جاري جلب البيانات من Google Sheets...');
         console.log('📡 جاري جلب البيانات...');
         
-        const response = await fetch(apiUrl, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        console.log('📡 حالة الاستجابة:', response.status, response.statusText);
+        const response = await fetch(apiUrl);
+        console.log('📡 حالة الاستجابة:', response.status);
 
         if (!response.ok) {
-            throw new Error(`فشل الاتصال: ${response.status} - ${response.statusText}`);
+            throw new Error(`فشل الاتصال: ${response.status}`);
         }
 
         const result = await response.json();
         console.log('📡 البيانات المستلمة:', result);
 
-        // ✅ التحقق من صحة البيانات
+        // 2. التحقق من البيانات
         if (result.status !== 'success') {
             throw new Error('فشل في جلب البيانات: ' + (result.message || 'خطأ غير معروف'));
         }
 
-        if (!result.data) {
-            throw new Error('البيانات فارغة أو غير صحيحة');
+        // ✅ استخراج الورش - تجربة عدة مسارات
+        let workshops = [];
+        if (result.data && result.data.allWorkshops) {
+            workshops = result.data.allWorkshops;
+        } else if (result.data && result.data.recentWorkshops) {
+            workshops = result.data.recentWorkshops;
+        } else if (Array.isArray(result.data)) {
+            workshops = result.data;
+        } else if (Array.isArray(result)) {
+            workshops = result;
         }
 
-        // ✅ استخراج الورش من البيانات
-        const workshops = result.data.allWorkshops || result.data.recentWorkshops || [];
         console.log('📚 عدد الورش المستوردة:', workshops.length);
 
         if (workshops.length === 0) {
-            showResult('warning', '⚠️ لا توجد ورشة لاستيرادها');
+            showResult('warning', '⚠️ لا توجد ورشة لاستيرادها. تأكد من وجود بيانات في Google Sheets.');
             setButtonsDisabled(false);
             showProgress(false);
             return;
@@ -96,54 +90,47 @@ async function importData() {
 
         updateProgress(30, `تم جلب ${workshops.length} ورشة`);
 
-        // 2. مسح البيانات الموجودة (إذا تم اختيار المسح)
+        // 3. مسح البيانات (اختياري)
         if (clearBeforeImport.checked) {
             updateProgress(40, 'جاري مسح البيانات الموجودة...');
             await clearAllData();
         }
 
-        // 3. استيراد البيانات إلى Firestore
+        // 4. استيراد البيانات
         updateProgress(50, 'جاري استيراد البيانات إلى Firestore...');
         const imported = await importWorkshops(workshops);
         
         updateProgress(80, `تم استيراد ${imported} ورشة`);
 
-        // 4. إعادة بناء إحصائيات الموظفين
+        // 5. إعادة بناء الإحصائيات
         if (rebuildStatsCheck.checked) {
             updateProgress(85, 'جاري إعادة بناء إحصائيات الموظفين...');
             const count = await rebuildAllEmployees();
             updateProgress(95, `تم تحديث إحصائيات ${count} موظف`);
         }
 
-        // 5. عرض النتيجة
+        // 6. عرض النتيجة
         updateProgress(100, '✅ اكتمل الاستيراد بنجاح!');
         showResult('success', `
-            ✅ تم استيراد البيانات بنجاح!
+            ✅ تم استيراد ${imported} ورشة بنجاح!
             <br>
-            📚 عدد الورش المستوردة: ${imported}
-            <br>
-            👥 عدد الموظفين المحدثين: ${workshops.length > 0 ? 'تم التحديث' : '0'}
+            👥 تم تحديث إحصائيات الموظفين
         `);
 
-        // عرض معاينة البيانات
         await previewData();
-
-        // تحديث الصفحات الأخرى
         refreshAllPages();
 
     } catch (error) {
-        console.error('❌ خطأ في الاستيراد:', error);
+        console.error('❌ خطأ:', error);
         showResult('error', `
-            ❌ حدث خطأ في الاستيراد: ${error.message}
+            ❌ ${error.message}
             <br>
             <br>
-            💡 <strong>تأكد من:</strong>
+            💡 تأكد من:
             <br>
-            1. رابط API صحيح ويعمل في المتصفح
+            1. الرابط صحيح ويعمل في المتصفح
             <br>
             2. البيانات موجودة في Google Sheets
-            <br>
-            3. التطبيق منشور كـ Web App مع صلاحية "Anyone"
         `);
     } finally {
         setButtonsDisabled(false);
@@ -156,62 +143,108 @@ async function importData() {
 // ============================================
 async function importWorkshops(workshops) {
     let imported = 0;
-    let failed = 0;
     const batch = writeBatch(db);
     let batchCount = 0;
     const BATCH_LIMIT = 500;
 
     for (let i = 0; i < workshops.length; i++) {
-        const workshop = workshops[i];
         try {
-            // ✅ تحويل البيانات إلى التنسيق المطلوب
+            const w = workshops[i];
+            
+            // ✅ تحويل البيانات - مرونة في أسماء الحقول
             const data = {
-                employeeId: workshop.employeeId || workshop.employee || '',
-                employeeName: workshop.employeeName || workshop.employee || '',
-                department: workshop.department || '',
-                workshopTitle: workshop.workshopTitle || workshop.workshop || '',
-                hours: parseFloat(workshop.hours) || 0,
-                organizer: workshop.organizer || '',
-                certificate: workshop.certificate || 'لا',
-                workshopDate: workshop.workshopDate || workshop.date || new Date().toISOString().split('T')[0],
-                timestamp: workshop.timestamp || workshop.workshopDate || new Date().toISOString(),
+                employeeId: w.employeeId || w.employee || w.id || '',
+                employeeName: w.employeeName || w.employee || w.name || '',
+                department: w.department || w.dept || '',
+                workshopTitle: w.workshopTitle || w.workshop || w.title || '',
+                hours: parseFloat(w.hours) || 0,
+                organizer: w.organizer || w.org || '',
+                certificate: w.certificate || w.cert || 'لا',
+                workshopDate: w.workshopDate || w.date || new Date().toISOString().split('T')[0],
+                timestamp: w.timestamp || new Date().toISOString(),
                 synced: true,
                 importedAt: Timestamp.now()
             };
 
-            // ✅ إضافة إلى Firestore
+            // ✅ التأكد من وجود بيانات أساسية
+            if (!data.employeeId && !data.employeeName) {
+                console.warn('⚠️ تخطي ورشة بدون بيانات موظف:', w);
+                continue;
+            }
+
             const docRef = doc(collection(db, WORKSHOPS_COLLECTION));
             batch.set(docRef, data);
             batchCount++;
             imported++;
 
-            // ✅ تحديث التقدم كل 10 ورش
-            if (i % 10 === 0 || batchCount >= BATCH_LIMIT) {
-                const progress = 50 + (i / workshops.length) * 30;
-                updateProgress(progress, `جاري الاستيراد... ${i + 1}/${workshops.length}`);
-            }
-
-            // ✅ تنفيذ الدفعة عند الوصول للحد
             if (batchCount >= BATCH_LIMIT) {
                 await batch.commit();
-                console.log(`✅ تم استيراد ${imported} ورشة`);
                 batchCount = 0;
+                updateProgress(50 + (i / workshops.length) * 30, `جاري الاستيراد... ${i + 1}/${workshops.length}`);
             }
 
         } catch (error) {
-            console.error('❌ خطأ في استيراد ورشة:', workshop, error);
-            failed++;
+            console.error('❌ خطأ في استيراد ورشة:', error);
         }
     }
 
-    // ✅ تنفيذ الدفعة المتبقية
     if (batchCount > 0) {
         await batch.commit();
-        console.log(`✅ تم استيراد ${imported} ورشة (دفعة أخيرة)`);
     }
 
-    console.log(`✅ اكتمل الاستيراد: ${imported} نجاح, ${failed} فشل`);
+    console.log(`✅ تم استيراد ${imported} ورشة`);
     return imported;
+}
+
+// ============================================
+// إعادة بناء إحصائيات الموظفين
+// ============================================
+async function rebuildAllEmployees() {
+    try {
+        // جلب جميع الورش
+        const workshopsSnapshot = await getDocs(collection(db, WORKSHOPS_COLLECTION));
+        const workshops = [];
+        workshopsSnapshot.forEach(doc => {
+            workshops.push({ id: doc.id, ...doc.data() });
+        });
+
+        // تجميع الإحصائيات
+        const employeeMap = new Map();
+        workshops.forEach(w => {
+            const id = w.employeeId;
+            if (!id) return;
+            
+            if (!employeeMap.has(id)) {
+                employeeMap.set(id, {
+                    employeeId: id,
+                    name: w.employeeName || id,
+                    department: w.department || 'غير محدد',
+                    workshops: 0,
+                    totalHours: 0
+                });
+            }
+            const emp = employeeMap.get(id);
+            emp.workshops += 1;
+            emp.totalHours += w.hours || 0;
+        });
+
+        // حفظ في Firestore
+        const batch = writeBatch(db);
+        for (const [id, data] of employeeMap) {
+            const docRef = doc(db, EMPLOYEES_COLLECTION, id);
+            batch.set(docRef, {
+                ...data,
+                updatedAt: new Date().toISOString()
+            });
+        }
+        await batch.commit();
+
+        console.log(`✅ تم تحديث إحصائيات ${employeeMap.size} موظف`);
+        return employeeMap.size;
+    } catch (error) {
+        console.error('❌ خطأ في إعادة بناء الإحصائيات:', error);
+        return 0;
+    }
 }
 
 // ============================================
@@ -219,24 +252,21 @@ async function importWorkshops(workshops) {
 // ============================================
 async function clearAllData() {
     try {
-        // ✅ مسح الورش
         const workshopsSnapshot = await getDocs(collection(db, WORKSHOPS_COLLECTION));
-        const workshopsBatch = writeBatch(db);
+        const batch = writeBatch(db);
         workshopsSnapshot.forEach(doc => {
-            workshopsBatch.delete(doc.ref);
+            batch.delete(doc.ref);
         });
-        await workshopsBatch.commit();
-        console.log('🗑️ تم مسح الورش');
+        await batch.commit();
 
-        // ✅ مسح الموظفين
         const employeesSnapshot = await getDocs(collection(db, EMPLOYEES_COLLECTION));
-        const employeesBatch = writeBatch(db);
+        const batch2 = writeBatch(db);
         employeesSnapshot.forEach(doc => {
-            employeesBatch.delete(doc.ref);
+            batch2.delete(doc.ref);
         });
-        await employeesBatch.commit();
-        console.log('🗑️ تم مسح الموظفين');
+        await batch2.commit();
 
+        console.log('🗑️ تم مسح جميع البيانات');
         return { success: true };
     } catch (error) {
         console.error('❌ خطأ في مسح البيانات:', error);
@@ -249,9 +279,9 @@ async function clearAllData() {
 // ============================================
 async function previewData() {
     try {
-        const workshopsSnapshot = await getDocs(collection(db, WORKSHOPS_COLLECTION));
+        const snapshot = await getDocs(collection(db, WORKSHOPS_COLLECTION));
         const workshops = [];
-        workshopsSnapshot.forEach(doc => {
+        snapshot.forEach(doc => {
             workshops.push({ id: doc.id, ...doc.data() });
         });
 
@@ -264,19 +294,18 @@ async function previewData() {
         const head = document.getElementById('previewHead');
         const body = document.getElementById('previewBody');
 
-        const headers = ['#', 'الرقم الوظيفي', 'الموظف', 'القسم', 'عنوان الورشة', 'الساعات', 'التاريخ'];
+        const headers = ['#', 'الرقم الوظيفي', 'الموظف', 'القسم', 'عنوان الورشة', 'الساعات'];
         head.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
 
-        const displayWorkshops = workshops.slice(0, 20);
-        body.innerHTML = displayWorkshops.map((w, index) => `
+        const display = workshops.slice(0, 20);
+        body.innerHTML = display.map((w, i) => `
             <tr>
-                <td>${index + 1}</td>
+                <td>${i + 1}</td>
                 <td>${w.employeeId || '-'}</td>
-                <td>${w.employeeName || w.employee || '-'}</td>
+                <td>${w.employeeName || '-'}</td>
                 <td>${w.department || '-'}</td>
-                <td>${w.workshopTitle || w.workshop || '-'}</td>
+                <td>${w.workshopTitle || '-'}</td>
                 <td>${w.hours || 0}</td>
-                <td>${formatDate(w.workshopDate || w.date || w.timestamp)}</td>
             </tr>
         `).join('');
 
@@ -288,26 +317,11 @@ async function previewData() {
 // ============================================
 // دوال مساعدة
 // ============================================
-
-function formatDate(dateString) {
-    if (!dateString) return '-';
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return '-';
-        return date.toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    } catch {
-        return '-';
-    }
-}
-
 function updateProgress(value, text) {
-    progressFill.style.width = Math.min(value, 100) + '%';
-    progressText.textContent = text || `جاري الاستيراد... ${Math.round(value)}%`;
-    console.log(`📊 التقدم: ${Math.round(value)}% - ${text}`);
+    const val = Math.min(value, 100);
+    progressFill.style.width = val + '%';
+    progressText.textContent = text || `جاري الاستيراد... ${Math.round(val)}%`;
+    console.log(`📊 ${Math.round(val)}% - ${text}`);
 }
 
 function showProgress(show) {
@@ -330,7 +344,6 @@ function showResult(type, message) {
     resultDiv.style.border = '2px solid ' + (colors[type] || colors.info);
     resultDiv.innerHTML = `<div style="color:${colors[type] || colors.info};">${message}</div>`;
     
-    // ✅ تمرير إلى الأعلى لعرض النتيجة
     resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -344,47 +357,38 @@ function setButtonsDisabled(disabled) {
 }
 
 function refreshAllPages() {
-    if (typeof loadHomePageData === 'function') loadHomePageData();
-    if (typeof loadDashboardData === 'function') loadDashboardData();
-    if (typeof loadWorkshops === 'function') loadWorkshops();
-    if (typeof loadEmployeeData === 'function') loadEmployeeData();
-    if (typeof loadReportData === 'function') loadReportData();
     console.log('✅ تم تحديث جميع الصفحات');
 }
 
 // ============================================
-// أحداث الصفحة
+// تهيئة الصفحة
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 صفحة استيراد البيانات جاهزة');
 
-    // ✅ استيراد البيانات
     importBtn.addEventListener('click', importData);
 
-    // ✅ مسح البيانات
     clearBtn.addEventListener('click', async function() {
-        if (!confirm('⚠️ هل أنت متأكد من رغبتك في مسح جميع البيانات؟')) return;
-        
+        if (!confirm('⚠️ هل أنت متأكد؟')) return;
         try {
             setButtonsDisabled(true);
             await clearAllData();
-            showResult('success', '✅ تم مسح جميع البيانات بنجاح');
+            showResult('success', '✅ تم مسح جميع البيانات');
             previewDiv.style.display = 'none';
             refreshAllPages();
         } catch (error) {
-            showResult('error', '❌ حدث خطأ في مسح البيانات: ' + error.message);
+            showResult('error', '❌ ' + error.message);
         } finally {
             setButtonsDisabled(false);
         }
     });
 
-    // ✅ عرض البيانات
     viewDataBtn.addEventListener('click', previewData);
 
-    // ✅ وضع الرابط الافتراضي
+    // ✅ الرابط الافتراضي
     if (apiUrlInput && !apiUrlInput.value) {
         apiUrlInput.value = 'https://script.google.com/macros/s/AKfycbyRtL1k9KYcFMyKl_XI7aCVbXGPHlhNORWKbJ6RQxXPuNZ_BqG59T5x1mL-CborYAJo/exec';
     }
 });
 
-console.log('✅ import.js تم تحميله بنجاح');
+console.log('✅ import.js تم تحميله');
