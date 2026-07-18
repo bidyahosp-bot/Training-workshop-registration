@@ -26,7 +26,15 @@
         <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
         <button class="lang-btn" data-lang="en">🇬🇧 English</button>
     </div>
-
+<div class="import-actions">
+    <button id="importBtn" class="btn-primary btn-lg">
+        <i class="fas fa-cloud-download-alt"></i> استيراد من API
+    </button>
+    <button id="importCsvBtn" class="btn-success btn-lg">
+        <i class="fas fa-file-csv"></i> استيراد من CSV
+    </button>
+    <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
+</div>
     <header class="header">
         <div class="container">
             <div class="header-content">
