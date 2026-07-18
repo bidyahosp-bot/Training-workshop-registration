@@ -15,6 +15,7 @@ const translations = {
         "nav_employee": "صفحة الموظف",
         "nav_about": "عن المطور",
         "nav_import": "استيراد البيانات",
+        "nav_admin": "🔐 إدارة الورش",
         
         // الصفحة الرئيسية
         "hero_title": "معًا نبني ثقافة التعلم المستمر في مستشفى بدية",
@@ -173,6 +174,7 @@ const translations = {
         "nav_employee": "Employee Profile",
         "nav_about": "About",
         "nav_import": "Import Data",
+        "nav_admin": "🔐 Admin Panel",
         
         // Home
         "hero_title": "Together, we build a culture of continuous learning at Bidiya Hospital",
@@ -323,9 +325,25 @@ const translations = {
 let currentLang = localStorage.getItem('bth_lang') || 'ar';
 
 // ============================================
+// ✅ أيقونات الأقسام (مضافة هنا)
+// ============================================
+export const DEPT_ICONS = {
+    'الأطباء': '👨‍⚕️',
+    'التمريض': '👩‍⚕️',
+    'التضميد': '🩹',
+    'الصيدلة': '💊',
+    'الأشعة': '📷',
+    'الأسنان': '🦷',
+    'المختبر': '🔬',
+    'السجلات الطبية': '📋',
+    'الإدارة': '📊',
+    'التثقيف الصحي': '📚',
+    'التغذية': '🍎'
+};
+
+// ============================================
 // الدوال الأساسية
 // ============================================
-
 export function t(key) {
     return translations[currentLang]?.[key] || key;
 }
@@ -345,7 +363,6 @@ export function getCurrentLang() {
 // ============================================
 // ترجمة الأقسام
 // ============================================
-
 export function translateDepartment(deptName, lang) {
     lang = lang || currentLang || 'ar';
     
@@ -384,11 +401,9 @@ export function translateDepartment(deptName, lang) {
 // ============================================
 // تحديث واجهة المستخدم
 // ============================================
-
 function updateUI() {
     console.log('🔄 تحديث الترجمة إلى:', currentLang);
     
-    // تحديث النصوص
     document.querySelectorAll('[data-i18n]').forEach(function(el) {
         const key = el.getAttribute('data-i18n');
         const translated = t(key);
@@ -397,7 +412,6 @@ function updateUI() {
         }
     });
     
-    // تحديث الـ placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
         const key = el.getAttribute('data-i18n-placeholder');
         const translated = t(key);
@@ -406,20 +420,17 @@ function updateUI() {
         }
     });
     
-    // تحديث أزرار اللغة
     document.querySelectorAll('.lang-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.lang === currentLang);
     });
     
-    // تحديث اتجاه الصفحة
     document.documentElement.lang = currentLang;
     document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
     localStorage.setItem('bth_lang', currentLang);
     
-    // ✅ تحديث قوائم الأقسام
     updateDepartmentOptions();
     
-    // ✅ إرسال حدث لتحديث الصفحات الأخرى (مثل register.js)
+    // ✅ إرسال حدث لتحديث الصفحات الأخرى
     const event = new CustomEvent('languageChanged', { 
         detail: { lang: currentLang } 
     });
@@ -429,11 +440,9 @@ function updateUI() {
 }
 
 // ============================================
-// تحديث قوائم الأقسام في الصفحة
+// تحديث قوائم الأقسام
 // ============================================
-
 function updateDepartmentOptions() {
-    // ✅ تحديث كل قوائم الأقسام في الصفحة
     const selects = document.querySelectorAll('select#department, select#filterDepartment, select.department-select');
     
     selects.forEach(function(select) {
@@ -441,13 +450,11 @@ function updateDepartmentOptions() {
         const currentValue = select.value;
         select.innerHTML = '';
         
-        // ✅ الخيار الافتراضي
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
         defaultOption.textContent = currentLang === 'ar' ? 'اختر القسم' : 'Select Department';
         select.appendChild(defaultOption);
         
-        // ✅ الأقسام
         const departments = [
             { value: 'الأطباء', key: 'dept_doctors' },
             { value: 'التمريض', key: 'dept_nursing' },
@@ -462,20 +469,7 @@ function updateDepartmentOptions() {
             { value: 'التغذية', key: 'dept_nutrition' }
         ];
         
-        // ✅ الأيقونات
-        const icons = {
-            'الأطباء': '👨‍⚕️',
-            'التمريض': '👩‍⚕️',
-            'التضميد': '🩹',
-            'الصيدلة': '💊',
-            'الأشعة': '📷',
-            'الأسنان': '🦷',
-            'المختبر': '🔬',
-            'السجلات الطبية': '📋',
-            'الإدارة': '📊',
-            'التثقيف الصحي': '📚',
-            'التغذية': '🍎'
-        };
+        const icons = DEPT_ICONS;
         
         departments.forEach(function(dept) {
             const option = document.createElement('option');
@@ -486,7 +480,6 @@ function updateDepartmentOptions() {
             select.appendChild(option);
         });
         
-        // ✅ استعادة القيمة المحددة
         if (currentValue) {
             select.value = currentValue;
         }
@@ -494,20 +487,24 @@ function updateDepartmentOptions() {
 }
 
 // ============================================
+// تحديث جميع قوائم الأقسام (للاستيراد من register.js)
+// ============================================
+export function updateAllDepartmentSelects() {
+    updateDepartmentOptions();
+}
+
+// ============================================
 // تحميل الصفحة
 // ============================================
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 i18n جاهز (Firestore)');
     
-    // ✅ أزرار اللغة
     document.querySelectorAll('.lang-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             setLanguage(this.dataset.lang);
         });
     });
     
-    // ✅ تحديث الواجهة
     updateUI();
 });
 
