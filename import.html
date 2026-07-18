@@ -21,7 +21,39 @@
 <body>
 
     <button class="dark-toggle" id="darkToggle"><i class="fas fa-moon"></i></button>
+<!-- في قسم أزرار التحكم -->
+<div class="import-actions">
+    <button id="importBtn" class="btn-primary btn-lg">
+        <i class="fas fa-cloud-download-alt"></i> استيراد من API
+    </button>
+    <button id="importCsvBtn" class="btn-success btn-lg">
+        <i class="fas fa-file-csv"></i> استيراد من CSV
+    </button>
+    <button id="clearBtn" class="btn-danger btn-lg">
+        <i class="fas fa-trash-alt"></i> مسح جميع البيانات
+    </button>
+    <button id="viewDataBtn" class="btn-secondary btn-lg">
+        <i class="fas fa-eye"></i> عرض البيانات
+    </button>
+</div>
 
+<!-- إضافة input file مخفي -->
+<input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
+
+<!-- منطقة لصق النص -->
+<div id="pasteArea" style="display:none; margin-top:20px;">
+    <div class="settings-card">
+        <h3><i class="fas fa-paste"></i> الصق البيانات هنا</h3>
+        <div class="form-group">
+            <label>انسخ البيانات من Google Sheets والصقها هنا</label>
+            <textarea id="csvTextArea" rows="10" class="form-control" 
+                placeholder="انسخ الصفوف من Google Sheets هنا..."></textarea>
+        </div>
+        <button id="pasteImportBtn" class="btn-primary">
+            <i class="fas fa-upload"></i> استيراد البيانات الملصقة
+        </button>
+    </div>
+</div>
     <div class="lang-selector">
         <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
         <button class="lang-btn" data-lang="en">🇬🇧 English</button>
