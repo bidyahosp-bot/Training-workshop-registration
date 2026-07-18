@@ -1,160 +1,313 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سجل الورش - Bidiya Hospital Training Hub</title>
+// ============================================
+// Workshops JavaScript - Bidiya Training Hub
+// Version 3.0 - Firebase Firestore
+// ============================================
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/dark-mode.css">
+import { getAllWorkshops } from './db-firestore.js';
+import { formatDate, DEPT_ICONS, translateDepartment, getCurrentLang, t } from './i18n.js';
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a7a3a">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BTH">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
-</head>
-<body>
+let allWorkshops = [];
+let filteredWorkshops = [];
+let currentPage = 1;
+const itemsPerPage = 20;
 
-    <button class="dark-toggle" id="darkToggle"><i class="fas fa-moon"></i></button>
+// ============================================
+// تحميل الورش من Firestore
+// ============================================
+export async function loadWorkshops() {
+    try {
+        console.log('📡 جاري تحميل الورش من Firestore...');
 
-    <div class="lang-selector">
-        <button class="lang-btn active" data-lang="ar">🇸🇦 عربي</button>
-        <button class="lang-btn" data-lang="en">🇬🇧 English</button>
-    </div>
+        allWorkshops = await getAllWorkshops();
+        filteredWorkshops = [...allWorkshops];
 
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <img src="assets/img/logo.png" alt="BTH Logo" class="logo-img" onerror="this.style.display='none'">
-                    <div>
-                        <h1 class="logo-title" data-i18n="app_name">منصة مستشفى بدية للتدريب والتطوير المهني</h1>
-                        <p class="logo-tagline" data-i18n="tagline">نتعلم اليوم... لنرعى أفضل غدًا</p>
-                    </div>
-                </div>
-                <nav class="main-nav">
-                    <a href="index.html" data-i18n="nav_home">الرئيسية</a>
-                    <a href="dashboard.html" data-i18n="nav_dashboard">لوحة الشرف</a>
-                    <a href="workshops.html" data-i18n="nav_workshops">سجل الورش</a>
-                    <a href="register.html" class="active" data-i18n="nav_register">تسجيل ورشة</a>
-                    <a href="reports.html" data-i18n="nav_reports">التقارير</a>
-                    <a href="employee.html" data-i18n="nav_employee">صفحة الموظف</a>
-                    <a href="admin-workshops.html" class="admin-link">🔐 إدارة الورش</a>
-                    <a href="about.html" data-i18n="nav_about">عن المطور</a>
-                </nav>
-            </div>
-        </div>
-    </header>
+        console.log('📚 عدد الورش:', allWorkshops.length);
 
-    <section class="workshops-page">
-        <div class="container">
-            <div class="page-header">
-                <h1>📚 <span data-i18n="workshops_title">سجل الورش التدريبية</span></h1>
-                <p data-i18n="workshops_subtitle">استعراض جميع الورش المسجلة مع إمكانية البحث والتصفية</p>
-            </div>
+        populateFilters(allWorkshops);
+        renderTable();
+        updateResultsCount();
 
-            <div class="workshops-controls">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="🔍 ابحث باسم الموظف، القسم، عنوان الورشة..." data-i18n-placeholder="search_placeholder">
-                </div>
-                <div class="filter-group">
-                    <select id="filterDepartment">
-                        <option value="all" data-i18n="all_departments">جميع الأقسام</option>
-                    </select>
-                    <select id="filterYear">
-                        <option value="all">جميع السنوات</option>
-                    </select>
-                    <select id="filterMonth">
-                        <option value="all">جميع الأشهر</option>
-                        <option value="1">يناير</option>
-                        <option value="2">فبراير</option>
-                        <option value="3">مارس</option>
-                        <option value="4">أبريل</option>
-                        <option value="5">مايو</option>
-                        <option value="6">يونيو</option>
-                        <option value="7">يوليو</option>
-                        <option value="8">أغسطس</option>
-                        <option value="9">سبتمبر</option>
-                        <option value="10">أكتوبر</option>
-                        <option value="11">نوفمبر</option>
-                        <option value="12">ديسمبر</option>
-                    </select>
-                    <button id="clearFilters" class="btn-secondary"><i class="fas fa-times"></i> مسح</button>
-                </div>
-                <div class="workshops-actions">
-                    <span id="resultsCount">0</span> <span data-i18n="workshops_found">ورشة تدريبية</span>
-                    <button id="exportBtn" class="btn-primary"><i class="fas fa-file-excel"></i> <span data-i18n="export_excel">تصدير Excel</span></button>
-                </div>
-            </div>
+    } catch (error) {
+        console.error('❌ خطأ:', error);
+        showError('حدث خطأ في تحميل البيانات من قاعدة البيانات');
+    }
+}
 
-            <div class="table-container">
-                <table class="workshops-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th data-i18n="employee_id">الرقم الوظيفي</th>
-                            <th data-i18n="employee_name">اسم الموظف</th>
-                            <th data-i18n="department">القسم</th>
-                            <th data-i18n="workshop_title">عنوان الورشة</th>
-                            <th data-i18n="hours">ساعات</th>
-                            <th data-i18n="organizer">الجهة المنظمة</th>
-                            <th data-i18n="date">التاريخ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="workshopsBody"></tbody>
-                </table>
-            </div>
+// ============================================
+// عرض الأخطاء
+// ============================================
+function showError(message) {
+    const tbody = document.getElementById('workshopsBody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="error-row" style="text-align:center; padding:40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:10px; color:#e74c3c;"></i>
+                    <p>${message}</p>
+                    <button onclick="location.reload()" class="btn-primary" style="margin-top:15px; padding:10px 20px; border:none; border-radius:var(--radius-sm); background:var(--primary); color:white; cursor:pointer;">
+                        <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                    </button>
+                </td>
+            </tr>
+        `;
+    }
+}
 
-            <div id="pagination" class="pagination"></div>
-        </div>
-    </section>
+// ============================================
+// تعبئة الفلاتر
+// ============================================
+function populateFilters(workshops) {
+    const lang = getCurrentLang();
+    
+    // ✅ استخراج الأقسام
+    const departments = [...new Set(workshops.map(w => w.department).filter(Boolean))];
+    
+    // ✅ استخراج السنوات
+    const years = [...new Set(workshops.map(w => {
+        try {
+            const date = new Date(w.workshopDate || w.date || w.timestamp);
+            return date.getFullYear();
+        } catch { return null; }
+    }).filter(Boolean))];
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <h3>🏥 Bidiya Hospital Training Hub</h3>
-                    <p data-i18n="footer_tagline">نتعلم اليوم... لنرعى أفضل غدًا</p>
-                </div>
-                <div class="footer-center">
-                    <p data-i18n="footer_copyright">© 2026 مستشفى بدية - جميع الحقوق محفوظة</p>
-                    <p class="footer-version">v3.0 | 🔥 Firestore | <span data-i18n="footer_pwa">تطبيق يعمل دون اتصال</span></p>
-                </div>
-                <div class="footer-developer">
-                    <div class="developer-badge">
-                        <span class="dev-icon">💎</span>
-                        <div class="dev-info">
-                            <span class="dev-name">JOUHARAH.IT</span>
-                            <span class="dev-role" data-i18n="dev_role">التطوير والبرمجة</span>
-                        </div>
-                    </div>
-                    <div class="dev-social">
-                        <a href="#" target="_blank"><i class="fas fa-globe"></i></a>
-                        <a href="#" target="_blank"><i class="fas fa-envelope"></i></a>
-                        <a href="#" target="_blank"><i class="fab fa-whatsapp"></i></a>
-                        <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p class="developer-credit">
-                    <span data-i18n="developed_by">تم التطوير بواسطة</span>
-                    <strong class="jouharah-text">💎 JOUHARAH.IT</strong>
-                    <span data-i18n="all_rights">© 2026</span>
-                </p>
-            </div>
-        </div>
-    </footer>
+    // ✅ تعبئة فلتر الأقسام
+    const deptSelect = document.getElementById('filterDepartment');
+    if (deptSelect) {
+        const currentValue = deptSelect.value;
+        deptSelect.innerHTML = '';
+        
+        const allOption = document.createElement('option');
+        allOption.value = 'all';
+        allOption.textContent = lang === 'ar' ? 'جميع الأقسام' : 'All Departments';
+        deptSelect.appendChild(allOption);
 
-    <!-- ✅ المسارات الصحيحة -->
-    <script type="module" src="assets/js/i18n.js"></script>
-    <script type="module" src="assets/js/main.js"></script>
-    <script type="module" src="assets/js/workshops.js"></script>
-</body>
-</html>
+        departments.sort().forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept;
+            const icon = DEPT_ICONS[dept] || '🏢';
+            const deptLabel = translateDepartment(dept, lang);
+            option.textContent = icon + ' ' + deptLabel;
+            deptSelect.appendChild(option);
+        });
+        
+        if (currentValue) deptSelect.value = currentValue;
+    }
+
+    // ✅ تعبئة فلتر السنوات
+    const yearSelect = document.getElementById('filterYear');
+    if (yearSelect) {
+        const currentValue = yearSelect.value;
+        yearSelect.innerHTML = '';
+        
+        const allOption = document.createElement('option');
+        allOption.value = 'all';
+        allOption.textContent = lang === 'ar' ? 'جميع السنوات' : 'All Years';
+        yearSelect.appendChild(allOption);
+
+        years.sort().reverse().forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+        
+        if (currentValue) yearSelect.value = currentValue;
+    }
+}
+
+// ============================================
+// تطبيق الفلاتر
+// ============================================
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const department = document.getElementById('filterDepartment').value;
+    const year = document.getElementById('filterYear').value;
+    const month = document.getElementById('filterMonth').value;
+
+    filteredWorkshops = allWorkshops.filter(w => {
+        // ✅ البحث
+        const matchSearch = !searchTerm ||
+            (w.employeeName && w.employeeName.toLowerCase().includes(searchTerm)) ||
+            (w.employeeId && w.employeeId.toLowerCase().includes(searchTerm)) ||
+            (w.department && w.department.toLowerCase().includes(searchTerm)) ||
+            (w.workshopTitle && w.workshopTitle.toLowerCase().includes(searchTerm)) ||
+            (w.organizer && w.organizer.toLowerCase().includes(searchTerm));
+
+        // ✅ القسم
+        const matchDept = department === 'all' || w.department === department;
+
+        // ✅ السنة
+        let matchYear = true;
+        if (year !== 'all') {
+            try {
+                const date = new Date(w.workshopDate || w.date || w.timestamp);
+                matchYear = date.getFullYear() === parseInt(year);
+            } catch { matchYear = false; }
+        }
+
+        // ✅ الشهر
+        let matchMonth = true;
+        if (month !== 'all') {
+            try {
+                const date = new Date(w.workshopDate || w.date || w.timestamp);
+                matchMonth = date.getMonth() + 1 === parseInt(month);
+            } catch { matchMonth = false; }
+        }
+
+        return matchSearch && matchDept && matchYear && matchMonth;
+    });
+
+    currentPage = 1;
+    renderTable();
+    updateResultsCount();
+}
+
+// ============================================
+// عرض الجدول
+// ============================================
+function renderTable() {
+    const tbody = document.getElementById('workshopsBody');
+    if (!tbody) return;
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageItems = filteredWorkshops.slice(start, end);
+
+    if (!pageItems || pageItems.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="empty-row" style="text-align:center; padding:40px;">
+                    <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:10px; color:var(--text-muted);"></i>
+                    لا توجد ورش تدريبية مطابقة للبحث
+                </td>
+            </tr>
+        `;
+        renderPagination();
+        return;
+    }
+
+    tbody.innerHTML = pageItems.map(function(w, index) {
+        const dateStr = w.workshopDate || w.date || w.timestamp || '';
+        return `
+            <tr>
+                <td>${start + index + 1}</td>
+                <td><strong>${w.employeeId || '-'}</strong></td>
+                <td>${w.employeeName || w.employee || '-'}</td>
+                <td>${w.department || '-'}</td>
+                <td>${w.workshopTitle || w.workshop || '-'}</td>
+                <td>${w.hours || 0}</td>
+                <td>${w.organizer || '-'}</td>
+                <td>${formatDate(dateStr)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    renderPagination();
+}
+
+// ============================================
+// عرض الترقيم
+// ============================================
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (!container) return;
+
+    const totalPages = Math.ceil(filteredWorkshops.length / itemsPerPage);
+
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+    container.innerHTML = html;
+
+    container.querySelectorAll('.page-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentPage = parseInt(this.dataset.page);
+            renderTable();
+        });
+    });
+}
+
+// ============================================
+// تحديث عدد النتائج
+// ============================================
+function updateResultsCount() {
+    const el = document.getElementById('resultsCount');
+    if (el) el.textContent = filteredWorkshops.length;
+}
+
+// ============================================
+// تصدير إلى Excel
+// ============================================
+function exportToExcel() {
+    if (!filteredWorkshops || filteredWorkshops.length === 0) {
+        alert('لا توجد بيانات للتصدير');
+        return;
+    }
+
+    const headers = ['#', 'الرقم الوظيفي', 'الموظف', 'القسم', 'عنوان الورشة', 'الساعات', 'الجهة المنظمة', 'التاريخ'];
+    const rows = filteredWorkshops.map(function(w, index) {
+        const dateStr = w.workshopDate || w.date || w.timestamp || '';
+        return [
+            index + 1,
+            w.employeeId || '',
+            w.employeeName || w.employee || '',
+            w.department || '',
+            w.workshopTitle || w.workshop || '',
+            w.hours || 0,
+            w.organizer || '',
+            formatDate(dateStr)
+        ];
+    });
+
+    const csv = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'سجل_الورش_' + new Date().toISOString().split('T')[0] + '.csv';
+    link.click();
+}
+
+// ============================================
+// أحداث الصفحة
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 صفحة سجل الورش جاهزة (Firestore v3.0)');
+    loadWorkshops();
+
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+
+    const deptFilter = document.getElementById('filterDepartment');
+    if (deptFilter) deptFilter.addEventListener('change', applyFilters);
+
+    const yearFilter = document.getElementById('filterYear');
+    if (yearFilter) yearFilter.addEventListener('change', applyFilters);
+
+    const monthFilter = document.getElementById('filterMonth');
+    if (monthFilter) monthFilter.addEventListener('change', applyFilters);
+
+    const clearBtn = document.getElementById('clearFilters');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterDepartment').value = 'all';
+            document.getElementById('filterYear').value = 'all';
+            document.getElementById('filterMonth').value = 'all';
+            applyFilters();
+        });
+    }
+
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) exportBtn.addEventListener('click', exportToExcel);
+});
+
+export default {
+    loadWorkshops,
+    applyFilters
+};
