@@ -4,7 +4,23 @@
 // ============================================
 
 import { getAllWorkshops } from './db-firestore.js';
-import { formatDate, DEPT_ICONS, translateDepartment, getCurrentLang } from './i18n.js';
+import { formatDate } from './config.js';
+import { translateDepartment, getCurrentLang } from './i18n.js';
+
+// ✅ أيقونات الأقسام (مضافة محلياً)
+const DEPT_ICONS = {
+    'الأطباء': '👨‍⚕️',
+    'التمريض': '👩‍⚕️',
+    'التضميد': '🩹',
+    'الصيدلة': '💊',
+    'الأشعة': '📷',
+    'الأسنان': '🦷',
+    'المختبر': '🔬',
+    'السجلات الطبية': '📋',
+    'الإدارة': '📊',
+    'التثقيف الصحي': '📚',
+    'التغذية': '🍎'
+};
 
 let allWorkshops = [];
 let filteredWorkshops = [];
@@ -59,10 +75,7 @@ function showError(message) {
 function populateFilters(workshops) {
     const lang = getCurrentLang();
     
-    // ✅ استخراج الأقسام
     const departments = [...new Set(workshops.map(w => w.department).filter(Boolean))];
-    
-    // ✅ استخراج السنوات
     const years = [...new Set(workshops.map(w => {
         try {
             const date = new Date(w.workshopDate || w.date || w.timestamp);
@@ -125,7 +138,6 @@ function applyFilters() {
     const month = document.getElementById('filterMonth').value;
 
     filteredWorkshops = allWorkshops.filter(w => {
-        // ✅ البحث
         const matchSearch = !searchTerm ||
             (w.employeeName && w.employeeName.toLowerCase().includes(searchTerm)) ||
             (w.employeeId && w.employeeId.toLowerCase().includes(searchTerm)) ||
@@ -133,10 +145,8 @@ function applyFilters() {
             (w.workshopTitle && w.workshopTitle.toLowerCase().includes(searchTerm)) ||
             (w.organizer && w.organizer.toLowerCase().includes(searchTerm));
 
-        // ✅ القسم
         const matchDept = department === 'all' || w.department === department;
 
-        // ✅ السنة
         let matchYear = true;
         if (year !== 'all') {
             try {
@@ -145,7 +155,6 @@ function applyFilters() {
             } catch { matchYear = false; }
         }
 
-        // ✅ الشهر
         let matchMonth = true;
         if (month !== 'all') {
             try {
