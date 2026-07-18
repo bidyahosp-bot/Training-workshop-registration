@@ -2,7 +2,7 @@
 // Employee JavaScript - BTH v3.0
 // ============================================
 
-import { getAllEmployees, getAllWorkshops, getEmployeeWorkshops, getTopEmployees } from './db-firestore.js';
+import { getAllEmployees, getAllWorkshops, getEmployeeWorkshops, rebuildAllEmployees } from './db-firestore.js';
 import { formatDate, getBadge, DEPT_ICONS } from './config.js';
 
 let allEmployees = [];
@@ -14,6 +14,9 @@ let allWorkshops = [];
 export async function loadEmployeeData() {
     try {
         console.log('📡 جاري تحميل بيانات الموظفين من Firestore...');
+
+        // ✅ إعادة بناء الإحصائيات أولاً للتأكد من وجود البيانات
+        await rebuildAllEmployees();
 
         const [employees, workshops] = await Promise.all([
             getAllEmployees(),
@@ -29,7 +32,7 @@ export async function loadEmployeeData() {
         if (allEmployees.length > 0) {
             renderEmployeeList(allEmployees);
         } else {
-            showEmployeeError('لا توجد بيانات موظفين');
+            showEmployeeError('لا توجد بيانات موظفين. يرجى تسجيل ورشة أولاً.');
         }
     } catch (error) {
         console.error('❌ خطأ:', error);
@@ -44,7 +47,7 @@ function showEmployeeError(message) {
             <div class="error-message" style="text-align:center; padding:30px;">
                 <i class="fas fa-exclamation-triangle" style="font-size:2rem; color:#e74c3c;"></i>
                 <p style="margin-top:10px;">${message}</p>
-                <button onclick="location.reload()" class="btn-primary" style="margin-top:15px;">
+                <button onclick="location.reload()" class="btn-primary" style="margin-top:15px; padding:10px 20px; border:none; border-radius:var(--radius-sm); background:var(--primary); color:white; cursor:pointer;">
                     <i class="fas fa-sync-alt"></i> إعادة المحاولة
                 </button>
             </div>
