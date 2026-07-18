@@ -34,7 +34,6 @@ const progressText = document.getElementById('progressText');
 const progressCount = document.getElementById('progressCount');
 const resultDiv = document.getElementById('importResult');
 const previewDiv = document.getElementById('dataPreview');
-const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl);
 
 // ============================================
 // استيراد البيانات
@@ -43,30 +42,50 @@ async function importData() {
     const apiUrl = apiUrlInput.value.trim();
     
     if (!apiUrl) {
-        showResult('error', 'https://script.google.com/macros/s/AKfycbyRtL1k9KYcFMyKl_XI7aCVbXGPHlhNORWKbJ6RQxXPuNZ_BqG59T5x1mL-CborYAJo/exec');
+        showResult('error', '⚠️ يرجى إدخال رابط API');
         return;
     }
+
+    console.log('📡 بدء الاستيراد من:', apiUrl);
 
     // تعطيل الأزرار
     setButtonsDisabled(true);
     showProgress(true);
-    updateProgress(0, 'جاري الاتصال بالخادم...');
+    updateProgress(5, 'جاري الاتصال بالخادم...');
 
     try {
         // 1. جلب البيانات من Google Sheets
         updateProgress(10, 'جاري جلب البيانات من Google Sheets...');
-        const response = await fetch(apiUrl);
-        const result = await response.json();
+        console.log('📡 جاري جلب البيانات...');
+        
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
 
-        if (result.status !== 'success' || !result.data) {
+        console.log('📡 حالة الاستجابة:', response.status, response.statusText);
+
+        if (!response.ok) {
+            throw new Error(`فشل الاتصال: ${response.status} - ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('📡 البيانات المستلمة:', result);
+
+        // ✅ التحقق من صحة البيانات
+        if (result.status !== 'success') {
             throw new Error('فشل في جلب البيانات: ' + (result.message || 'خطأ غير معروف'));
         }
 
-        const data = result.data;
-        const workshops = data.allWorkshops || data.recentWorkshops || [];
-        
+        if (!result.data) {
+            throw new Error('البيانات فارغة أو غير صحيحة');
+        }
+
+        // ✅ استخراج الورش من البيانات
+        const workshops = result.data.allWorkshops || result.data.recentWorkshops || [];
         console.log('📚 عدد الورش المستوردة:', workshops.length);
-        updateProgress(30, `تم جلب ${workshops.length} ورشة`);
 
         if (workshops.length === 0) {
             showResult('warning', '⚠️ لا توجد ورشة لاستيرادها');
@@ -74,6 +93,8 @@ async function importData() {
             showProgress(false);
             return;
         }
+
+        updateProgress(30, `تم جلب ${workshops.length} ورشة`);
 
         // 2. مسح البيانات الموجودة (إذا تم اختيار المسح)
         if (clearBeforeImport.checked) {
@@ -112,7 +133,18 @@ async function importData() {
 
     } catch (error) {
         console.error('❌ خطأ في الاستيراد:', error);
-        showResult('error', '❌ حدث خطأ في الاستيراد: ' + error.message);
+        showResult('error', `
+            ❌ حدث خطأ في الاستيراد: ${error.message}
+            <br>
+            <br>
+            💡 <strong>تأكد من:</strong>
+            <br>
+            1. رابط API صحيح ويعمل في المتصفح
+            <br>
+            2. البيانات موجودة في Google Sheets
+            <br>
+            3. التطبيق منشور كـ Web App مع صلاحية "Anyone"
+        `);
     } finally {
         setButtonsDisabled(false);
         showProgress(false);
@@ -124,13 +156,15 @@ async function importData() {
 // ============================================
 async function importWorkshops(workshops) {
     let imported = 0;
+    let failed = 0;
     const batch = writeBatch(db);
     let batchCount = 0;
     const BATCH_LIMIT = 500;
 
-    for (const workshop of workshops) {
+    for (let i = 0; i < workshops.length; i++) {
+        const workshop = workshops[i];
         try {
-            // تحويل البيانات إلى التنسيق المطلوب
+            // ✅ تحويل البيانات إلى التنسيق المطلوب
             const data = {
                 employeeId: workshop.employeeId || workshop.employee || '',
                 employeeName: workshop.employeeName || workshop.employee || '',
@@ -145,29 +179,38 @@ async function importWorkshops(workshops) {
                 importedAt: Timestamp.now()
             };
 
-            // إضافة إلى Firestore
+            // ✅ إضافة إلى Firestore
             const docRef = doc(collection(db, WORKSHOPS_COLLECTION));
             batch.set(docRef, data);
             batchCount++;
             imported++;
 
-            // تنفيذ الدفعة عند الوصول للحد
+            // ✅ تحديث التقدم كل 10 ورش
+            if (i % 10 === 0 || batchCount >= BATCH_LIMIT) {
+                const progress = 50 + (i / workshops.length) * 30;
+                updateProgress(progress, `جاري الاستيراد... ${i + 1}/${workshops.length}`);
+            }
+
+            // ✅ تنفيذ الدفعة عند الوصول للحد
             if (batchCount >= BATCH_LIMIT) {
                 await batch.commit();
+                console.log(`✅ تم استيراد ${imported} ورشة`);
                 batchCount = 0;
-                updateProgress(50 + (imported / workshops.length) * 30, `جاري الاستيراد... ${imported}/${workshops.length}`);
             }
 
         } catch (error) {
             console.error('❌ خطأ في استيراد ورشة:', workshop, error);
+            failed++;
         }
     }
 
-    // تنفيذ الدفعة المتبقية
+    // ✅ تنفيذ الدفعة المتبقية
     if (batchCount > 0) {
         await batch.commit();
+        console.log(`✅ تم استيراد ${imported} ورشة (دفعة أخيرة)`);
     }
 
+    console.log(`✅ اكتمل الاستيراد: ${imported} نجاح, ${failed} فشل`);
     return imported;
 }
 
@@ -176,7 +219,7 @@ async function importWorkshops(workshops) {
 // ============================================
 async function clearAllData() {
     try {
-        // مسح الورش
+        // ✅ مسح الورش
         const workshopsSnapshot = await getDocs(collection(db, WORKSHOPS_COLLECTION));
         const workshopsBatch = writeBatch(db);
         workshopsSnapshot.forEach(doc => {
@@ -185,7 +228,7 @@ async function clearAllData() {
         await workshopsBatch.commit();
         console.log('🗑️ تم مسح الورش');
 
-        // مسح الموظفين
+        // ✅ مسح الموظفين
         const employeesSnapshot = await getDocs(collection(db, EMPLOYEES_COLLECTION));
         const employeesBatch = writeBatch(db);
         employeesSnapshot.forEach(doc => {
@@ -221,11 +264,9 @@ async function previewData() {
         const head = document.getElementById('previewHead');
         const body = document.getElementById('previewBody');
 
-        // العناوين
         const headers = ['#', 'الرقم الوظيفي', 'الموظف', 'القسم', 'عنوان الورشة', 'الساعات', 'التاريخ'];
         head.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
 
-        // البيانات (أول 20 ورشة)
         const displayWorkshops = workshops.slice(0, 20);
         body.innerHTML = displayWorkshops.map((w, index) => `
             <tr>
@@ -264,8 +305,9 @@ function formatDate(dateString) {
 }
 
 function updateProgress(value, text) {
-    progressFill.style.width = value + '%';
+    progressFill.style.width = Math.min(value, 100) + '%';
     progressText.textContent = text || `جاري الاستيراد... ${Math.round(value)}%`;
+    console.log(`📊 التقدم: ${Math.round(value)}% - ${text}`);
 }
 
 function showProgress(show) {
@@ -283,13 +325,22 @@ function showResult(type, message) {
     resultDiv.style.display = 'block';
     resultDiv.style.borderColor = colors[type] || colors.info;
     resultDiv.style.backgroundColor = (colors[type] || colors.info) + '15';
-    resultDiv.innerHTML = `<div style="padding:20px; color:${colors[type] || colors.info};">${message}</div>`;
+    resultDiv.style.padding = '20px';
+    resultDiv.style.borderRadius = 'var(--radius-sm)';
+    resultDiv.style.border = '2px solid ' + (colors[type] || colors.info);
+    resultDiv.innerHTML = `<div style="color:${colors[type] || colors.info};">${message}</div>`;
+    
+    // ✅ تمرير إلى الأعلى لعرض النتيجة
+    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function setButtonsDisabled(disabled) {
     importBtn.disabled = disabled;
     clearBtn.disabled = disabled;
     viewDataBtn.disabled = disabled;
+    importBtn.style.opacity = disabled ? '0.6' : '1';
+    clearBtn.style.opacity = disabled ? '0.6' : '1';
+    viewDataBtn.style.opacity = disabled ? '0.6' : '1';
 }
 
 function refreshAllPages() {
@@ -307,10 +358,10 @@ function refreshAllPages() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 صفحة استيراد البيانات جاهزة');
 
-    // استيراد البيانات
+    // ✅ استيراد البيانات
     importBtn.addEventListener('click', importData);
 
-    // مسح البيانات
+    // ✅ مسح البيانات
     clearBtn.addEventListener('click', async function() {
         if (!confirm('⚠️ هل أنت متأكد من رغبتك في مسح جميع البيانات؟')) return;
         
@@ -327,8 +378,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // عرض البيانات
+    // ✅ عرض البيانات
     viewDataBtn.addEventListener('click', previewData);
+
+    // ✅ وضع الرابط الافتراضي
+    if (apiUrlInput && !apiUrlInput.value) {
+        apiUrlInput.value = 'https://script.google.com/macros/s/AKfycbyRtL1k9KYcFMyKl_XI7aCVbXGPHlhNORWKbJ6RQxXPuNZ_BqG59T5x1mL-CborYAJo/exec';
+    }
 });
 
 console.log('✅ import.js تم تحميله بنجاح');
