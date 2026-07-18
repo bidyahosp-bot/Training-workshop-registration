@@ -1,11 +1,9 @@
 // ============================================
 // Register JavaScript - Bidiya Training Hub
-// Version 3.0 - Firebase Firestore
 // ============================================
 
 import { addWorkshop, rebuildAllEmployees } from './db-firestore.js';
-import { DEPARTMENTS, DEPT_ICONS } from './config.js';
-import { t, getCurrentLang } from './i18n.js';
+import { t, getCurrentLang, updateAllDepartmentSelects } from './i18n.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('registerForm');
@@ -17,12 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.value = today;
     }
 
-    // ✅ تعبئة قائمة الأقسام مع دعم الترجمة
-    populateDepartments();
-
-    // ✅ تحديث الأقسام عند تغيير اللغة
+    // ✅ عند تغيير اللغة، تحديث قائمة الأقسام
     document.addEventListener('languageChanged', function() {
-        populateDepartments();
+        updateAllDepartmentSelects();
     });
 
     const hoursInput = document.getElementById('workshopHours');
@@ -84,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t('submitting') || 'جاري التسجيل...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التسجيل...';
             submitBtn.disabled = true;
 
             try {
@@ -92,12 +87,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (result.success) {
                     await rebuildAllEmployees();
-                    showNotification('✅ ' + t('workshop_registered') || 'تم تسجيل الورشة بنجاح!', 'success');
+                    showNotification('✅ تم تسجيل الورشة بنجاح!', 'success');
                     form.reset();
                     if (dateInput) dateInput.value = today;
                     refreshAllPages();
                 } else {
-                    alert('❌ ' + (result.error || 'يرجى المحاولة مرة أخرى'));
+                    alert('❌ حدث خطأ في التسجيل: ' + (result.error || 'يرجى المحاولة مرة أخرى'));
                 }
             } catch (error) {
                 console.error('❌ خطأ:', error);
@@ -109,71 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
-// ============================================
-// ✅ دالة تعبئة قائمة الأقسام مع الترجمة
-// ============================================
-function populateDepartments() {
-    const departmentSelect = document.getElementById('department');
-    if (!departmentSelect) return;
-
-    const currentLang = getCurrentLang();
-    const currentValue = departmentSelect.value;
-
-    // ✅ قائمة الأقسام مع الترجمة
-    const departments = [
-        { value: 'الأطباء', ar: 'الأطباء', en: 'Doctors' },
-        { value: 'التمريض', ar: 'التمريض', en: 'Nursing' },
-        { value: 'التضميد', ar: 'التضميد', en: 'Dressing' },
-        { value: 'الصيدلة', ar: 'الصيدلة', en: 'Pharmacy' },
-        { value: 'الأشعة', ar: 'الأشعة', en: 'Radiology' },
-        { value: 'الأسنان', ar: 'الأسنان', en: 'Dentistry' },
-        { value: 'المختبر', ar: 'المختبر', en: 'Laboratory' },
-        { value: 'السجلات الطبية', ar: 'السجلات الطبية', en: 'Medical Records' },
-        { value: 'الإدارة', ar: 'الإدارة', en: 'Administration' },
-        { value: 'التثقيف الصحي', ar: 'التثقيف الصحي', en: 'Health Education' },
-        { value: 'التغذية', ar: 'التغذية', en: 'Nutrition' }
-    ];
-
-    // ✅ الأيقونات لكل قسم
-    const icons = {
-        'الأطباء': '👨‍⚕️',
-        'التمريض': '👩‍⚕️',
-        'التضميد': '🩹',
-        'الصيدلة': '💊',
-        'الأشعة': '📷',
-        'الأسنان': '🦷',
-        'المختبر': '🔬',
-        'السجلات الطبية': '📋',
-        'الإدارة': '📊',
-        'التثقيف الصحي': '📚',
-        'التغذية': '🍎'
-    };
-
-    // ✅ بناء الخيارات
-    departmentSelect.innerHTML = '';
-    
-    // ✅ الخيار الافتراضي
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = currentLang === 'ar' ? 'اختر القسم' : 'Select Department';
-    departmentSelect.appendChild(defaultOption);
-
-    // ✅ الأقسام
-    departments.forEach(function(dept) {
-        const option = document.createElement('option');
-        option.value = dept.value;
-        const label = currentLang === 'ar' ? dept.ar : dept.en;
-        const icon = icons[dept.value] || '🏢';
-        option.textContent = icon + ' ' + label;
-        departmentSelect.appendChild(option);
-    });
-
-    // ✅ استعادة القيمة المحددة
-    if (currentValue) {
-        departmentSelect.value = currentValue;
-    }
-}
 
 // ============================================
 // دوال مساعدة
@@ -225,4 +155,4 @@ function refreshAllPages() {
     console.log('✅ تم تحديث جميع الصفحات');
 }
 
-console.log('✅ register.js تم تحميله بنجاح (مع دعم الترجمة)');
+console.log('✅ register.js تم تحميله بنجاح');
