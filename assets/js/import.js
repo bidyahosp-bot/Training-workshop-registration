@@ -42,7 +42,7 @@ async function importData() {
     const apiUrl = apiUrlInput.value.trim();
     
     if (!apiUrl) {
-        showResult('error', '⚠️ يرجى إدخال رابط API');
+        showResult('error', 'https://script.google.com/macros/s/AKfycbz211s9Fz-bWxA0nffBZ9Tt8om2RdwlYXTZgkCZb_3l3vYoy_nt8svd4iNZMFZ7G9VG/exec');
         return;
     }
 
