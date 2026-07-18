@@ -1900,3 +1900,450 @@ footer {
     padding: 8px 25px;
     font-size: 0.85rem;
 }
+/* ============================================
+   Bidiya Hospital Training Hub
+   تصميم متوافق مع الهواتف - إصلاح الصفحة الرئيسية
+   ============================================ */
+
+/* ========== كاردات الإحصائيات - الصف الأول ========== */
+.stats-cards {
+    padding: 15px 0 30px;
+}
+
+.stats-grid-top {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stats-grid-bottom {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.stat-card-horizontal {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-card);
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    transition: var(--transition);
+    min-height: 70px;
+}
+
+.stat-card-horizontal:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card-horizontal.highlight {
+    border: 2px solid var(--accent);
+    background: linear-gradient(135deg, var(--bg-card), rgba(241, 196, 15, 0.05));
+}
+
+.stat-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-card-horizontal.highlight .stat-number {
+    color: var(--accent);
+}
+
+/* ============================================
+   استجابة للهواتف - الصفحة الرئيسية فقط
+   ============================================ */
+
+/* ✅ للهواتف المتوسطة (480px - 768px) */
+@media (max-width: 768px) {
+    .stats-grid-top {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .stats-grid-bottom {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .stat-card-horizontal {
+        padding: 12px 14px;
+        gap: 10px;
+        min-height: 64px;
+        border-radius: var(--radius-sm);
+    }
+    
+    .stat-icon-wrapper {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        font-size: 1rem;
+        border-radius: 10px;
+    }
+    
+    .stat-number {
+        font-size: 1.1rem;
+    }
+    
+    .stat-label {
+        font-size: 0.6rem;
+    }
+}
+
+/* ✅ للهواتف الصغيرة (أقل من 480px) */
+@media (max-width: 480px) {
+    .stats-grid-top {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .stats-grid-bottom {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .stat-card-horizontal {
+        padding: 10px 10px;
+        gap: 8px;
+        min-height: 56px;
+        border-radius: 10px;
+    }
+    
+    .stat-icon-wrapper {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        font-size: 0.8rem;
+        border-radius: 8px;
+    }
+    
+    .stat-number {
+        font-size: 0.95rem;
+    }
+    
+    .stat-label {
+        font-size: 0.55rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* ✅ للهواتف الصغيرة جداً (أقل من 360px) */
+@media (max-width: 360px) {
+    .stats-grid-top {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    
+    .stats-grid-bottom {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    
+    .stat-card-horizontal {
+        padding: 8px 8px;
+        gap: 6px;
+        min-height: 48px;
+        border-radius: 8px;
+    }
+    
+    .stat-icon-wrapper {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        font-size: 0.7rem;
+        border-radius: 6px;
+    }
+    
+    .stat-number {
+        font-size: 0.8rem;
+    }
+    
+    .stat-label {
+        font-size: 0.5rem;
+    }
+}
+
+/* ============================================
+   القسم العلوي (Hero) - توافق الهواتف
+   ============================================ */
+
+.hero {
+    padding: 30px 0 25px;
+    border-radius: 0 0 30px 30px;
+    margin-bottom: 20px;
+}
+
+.hero h2 {
+    font-size: 1.6rem;
+}
+
+.hero p {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.hero-buttons .btn-primary,
+.hero-buttons .btn-secondary {
+    padding: 10px 20px;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 480px) {
+    .hero {
+        padding: 20px 0 20px;
+        border-radius: 0 0 20px 20px;
+    }
+    
+    .hero h2 {
+        font-size: 1.2rem;
+    }
+    
+    .hero p {
+        font-size: 0.8rem;
+        margin-bottom: 15px;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .hero-buttons .btn-primary,
+    .hero-buttons .btn-secondary {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+        padding: 10px 16px;
+        font-size: 0.75rem;
+    }
+}
+
+/* ============================================
+   بطاقات الميزات (Features) - توافق الهواتف
+   ============================================ */
+
+.features {
+    padding: 15px 0 40px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.feature-card {
+    padding: 20px 15px;
+    border-radius: var(--radius-md);
+}
+
+.feature-card i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.feature-card h3 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+}
+
+.feature-card p {
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+}
+
+.feature-card .btn-primary {
+    padding: 6px 16px;
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .feature-card {
+        padding: 16px 12px;
+    }
+    
+    .feature-card i {
+        font-size: 1.6rem;
+    }
+    
+    .feature-card h3 {
+        font-size: 0.85rem;
+    }
+    
+    .feature-card p {
+        font-size: 0.7rem;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .feature-card {
+        padding: 14px 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: right;
+        border-radius: var(--radius-sm);
+    }
+    
+    .feature-card i {
+        font-size: 1.4rem;
+        margin-bottom: 0;
+        min-width: 36px;
+        text-align: center;
+    }
+    
+    .feature-card .feature-text {
+        flex: 1;
+    }
+    
+    .feature-card h3 {
+        font-size: 0.8rem;
+        margin-bottom: 2px;
+    }
+    
+    .feature-card p {
+        font-size: 0.65rem;
+        margin-bottom: 0;
+    }
+    
+    .feature-card .btn-primary {
+        padding: 4px 12px;
+        font-size: 0.65rem;
+        white-space: nowrap;
+    }
+}
+
+/* ============================================
+   التذييل - توافق الهواتف
+   ============================================ */
+
+.footer {
+    padding: 30px 0;
+    margin-top: 40px;
+}
+
+.footer-content {
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.footer h3 {
+    font-size: 1rem;
+}
+
+.footer p {
+    font-size: 0.8rem;
+}
+
+.footer-version {
+    font-size: 0.7rem;
+}
+
+.developer-badge {
+    justify-content: center;
+}
+
+@media (max-width: 480px) {
+    .footer {
+        padding: 20px 0;
+        margin-top: 30px;
+    }
+    
+    .footer-content {
+        gap: 10px;
+    }
+    
+    .footer h3 {
+        font-size: 0.9rem;
+    }
+    
+    .footer p {
+        font-size: 0.7rem;
+    }
+}
+
+/* ============================================
+   تحسينات عامة للهواتف
+   ============================================ */
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 12px;
+    }
+    
+    .page-header {
+        padding: 10px 0 15px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .page-header p {
+        font-size: 0.8rem;
+    }
+    
+    .last-updated {
+        font-size: 0.65rem;
+        margin-top: 15px;
+    }
+}
